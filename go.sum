@@ -1,0 +1,4 @@
+github.com/go-sql-driver/mysql v1.6.0 h1:BCTh4TKNUYmOmMUcQ3IipzF5prigylS7XXjEkfCHuOE=
+github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
+github.com/kwinH/go-sql-builder v1.0.4 h1:QB1poUDxDvIP5LDjF6X6Tg91/RwFTrfpR9NJtVUweNI=
+github.com/kwinH/go-sql-builder v1.0.4/go.mod h1:idm+w2r/N+JnyLgVm+oKHW1fGetMdeoPR6pCelDP1ms=
