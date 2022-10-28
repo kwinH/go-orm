@@ -1,7 +1,7 @@
 # 简介
 
 > `oorm`是一款功能全面的数据库操作工具，提供一个漂亮、简洁的链式调用方式来实现与数据库的交互。
-* 
+
 
 # 模型定义
 ```go
@@ -664,9 +664,9 @@ func CreatreUser(db *oorm.DB) (*User, error) {
 ```
 
 
-# 插入
+# 新增
 
-> 查询构造器还提供了 `Create` 方法用于插入记录到数据库中。
+> 查询构造器还提供了 `Create` 方法用于插新增记录到数据库中。
 
 ## 创建Model
 ```go
@@ -842,6 +842,52 @@ baseDB.WithDelete().Get(&users)
 ```go
 // delete from `user` WHERE `id` < ? [100]
 affected,err := baseDB.Where("id","<",100).Delete(&user,true)
+```
+
+# 数据库事务
+想要在数据库事务中运行一系列操作，你可以使用 `oorm` 的 `Transaction` 方法。如果在事务的闭包中出现了异常，事务将会自动回滚。如果闭包执行成功，事务将会自动提交。在使用 `Transaction` 方法时不需要手动回滚或提交：
+
+```go
+	baseDB.Transaction(func(db *DB) (err error) {
+        user := User{
+        UserName: "test",
+        }
+        
+        _, err = d.Select("user_name").Create(&user)
+        
+        if err != nil {
+            return err
+        }
+        
+        _, err = baseDB.Where("user_name", "test").Delete(&user)
+        
+        if err != nil {
+            return err
+        }
+        
+        return nil
+	})
+```
+
+## 手动执行事务
+
+>如果你想要手动处理事务并完全控制回滚和提交，可以使用 `oorm` 提供的 `Begin` 方法： 
+
+>在事务中所有的操作都要用`Begin`返回的`*oorm.DB`对象去操作，包括回滚和提交
+
+```go
+db, err := d.Begin()
+```
+你可以通过 `RollBack` 方法回滚事务：
+
+```go
+ db.Rollback()
+```
+
+最后，你可以通过 `Commit` 方法提交事务： 
+
+```go
+db.Commit()
 ```
 
 # 钩子
