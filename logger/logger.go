@@ -45,6 +45,6 @@ func (l Logger) Trace(sql string, bindings []interface{}, begin time.Time) {
 	if l.LogLevel >= Trace {
 		runtime := time.Since(begin)
 		sql = fmt.Sprintf(strings.Replace(sql, "?", "\"%v\"", -1), bindings...)
-		log.New(os.Stdout, "\033[34m[info]\033[0m ", log.LstdFlags|log.Lshortfile).Printf("[runtime: %v]  "+sql, runtime)
+		log.New(os.Stdout, "\033[34m[trace]\033[0m ", log.LstdFlags|log.Lshortfile).Printf("[runtime: %v]  "+sql, runtime)
 	}
 }

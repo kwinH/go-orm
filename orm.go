@@ -101,10 +101,11 @@ func (d *DB) Clone() *DB {
 		Config: d.Config,
 		tx:     d.tx,
 
-		b:       d.b,
-		schema:  d.schema,
-		clone:   d.clone,
-		withDel: d.withDel,
+		b:         d.b,
+		schema:    d.schema,
+		clone:     d.clone,
+		withDel:   d.withDel,
+		omitEmpty: d.omitEmpty,
 	}
 
 	db.withs = make(map[string]WithFunc)
@@ -131,10 +132,11 @@ func (d *DB) ClonePure(clones ...int) *DB {
 		clone = clones[0]
 	}
 	db := &DB{
-		Config:  d.Config,
-		tx:      d.tx,
-		clone:   clone,
-		withDel: d.withDel,
+		Config:    d.Config,
+		tx:        d.tx,
+		clone:     clone,
+		withDel:   d.withDel,
+		omitEmpty: d.omitEmpty,
 	}
 
 	if clone == 1 {
@@ -152,7 +154,6 @@ func (d *DB) getInstance() *DB {
 	return d
 }
 
-// DB returns `*sql.DB`
 func (d *DB) DB() *sql.DB {
 	return d.connPool.(*sql.DB)
 }
