@@ -30,23 +30,21 @@ func (dialect *Dialect) GetDSN() string {
 	return dialect.Config.DSN
 }
 
-func (dialect *Dialect) DataTypeOf(field *schema.Field) string {
-	var fieldType string
+func (dialect *Dialect) DataTypeOf(field *schema.Field) (fieldType string) {
 	switch field.DataType {
 	case schema.Bool:
-		fieldType = "tinyint"
+		return "tinyint"
 	case schema.String:
 		if field.Size == 0 {
 			field.Size = 255
 		}
 		if field.Size > 0 && field.Size < 65536 {
-			return fmt.Sprintf("varchar(%v)", field.Size)
-		} else if field.Size >= 65536 && field.Size <= int(math.Pow(2, 24)) {
+			return fmt.Sprintf("varchar(%d)", field.Size)
+		} else if field.Size >= 65536 && field.Size <= int64(math.Pow(2, 24)) {
 			return "mediumtext"
 		} else {
 			return "longtext"
 		}
-
 	case schema.Int, schema.Uint:
 		if field.Size <= 8 {
 			fieldType = "tinyint"
@@ -60,27 +58,23 @@ func (dialect *Dialect) DataTypeOf(field *schema.Field) string {
 		if field.DataType == schema.Uint {
 			fieldType += " unsigned"
 		}
+		return fieldType
 	case schema.Float:
 		if field.Decimal != "" {
-			fieldType = fmt.Sprintf("decimal(%s)", field.Decimal)
+			return fmt.Sprintf("decimal(%s)", field.Decimal)
 		} else if field.Size <= 32 {
-			fieldType = "float"
+			return "float"
 		} else {
-			fieldType = "double"
+			return "double"
 		}
-	//case schema.Bytes:
-	//	if field.Size > 0 && field.Size < 65536 {
-	//		fieldType = fmt.Sprintf("varbinary(%d)", field.Size)
-	//	} else if field.Size >= 65536 && field.Size <= int(math.Pow(2, 24)) {
-	//		fieldType = "mediumblob"
-	//	} else {
-	//		fieldType = "longblob"
-	//	}
 	case schema.Time:
-		fieldType = "datetime(3)"
+		if field.Size == 0 {
+			field.Size = 3
+		}
+		return fmt.Sprintf("datetime(%d)", field.Size)
 	}
 
-	return fieldType
+	return
 }
 
 func (dialect *Dialect) Init() (connPool drive.IConnPool, err error) {
