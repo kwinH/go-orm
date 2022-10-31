@@ -26,7 +26,7 @@ type Field struct {
 	Tag           string
 	TagSettings   map[string]string
 	DataType      DataType
-	Size          int
+	Size          int64
 	Comment       string
 	Raw           bool
 	Decimal       string
@@ -132,8 +132,8 @@ func parseTag(field *Field, schema *Schema) {
 	}
 
 	if num, ok := field.TagSettings["size"]; ok {
-		if field.Size, err = strconv.Atoi(num); err != nil {
-			field.Size = -1
+		if field.Size, err = strconv.ParseInt(num, 10, 64); err != nil {
+			field.Size = 0
 		}
 	}
 
