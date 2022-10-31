@@ -2,6 +2,7 @@ package oorm
 
 import (
 	"database/sql"
+	"time"
 )
 
 type ITransaction interface {
@@ -9,37 +10,40 @@ type ITransaction interface {
 }
 
 func (d *DB) Begin() (*DB, error) {
+	start := time.Now()
 	var err error
 	db := d.ClonePure(0)
-	db.Logger.Info("Transaction Begin")
+
 	db.tx, err = db.connPool.(ITransaction).Begin()
 
 	if err != nil {
 		db.Logger.Error("Transaction Begin %v", err)
 	}
 
+	db.Logger.Trace("Transaction Begin", []interface{}{}, start)
+
 	return db, err
 }
 
 func (d *DB) Commit() (err error) {
-	d.Logger.Info("Transaction Commit")
+	start := time.Now()
 	err = d.tx.Commit()
 
 	if err != nil {
 		d.Logger.Error("Transaction Commit %v", err)
 	}
-
+	d.Logger.Trace("Transaction Commit", []interface{}{}, start)
 	return
 }
 
 func (d *DB) Rollback() (err error) {
-	d.Logger.Info("Transaction Rollback")
+	start := time.Now()
 	err = d.tx.Rollback()
 
 	if err != nil {
 		d.Logger.Error("Transaction Rollback %v", err)
 	}
-
+	d.Logger.Trace("Transaction Rollback", []interface{}{}, start)
 	return
 }
 
