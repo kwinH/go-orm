@@ -37,19 +37,20 @@ type IndexList map[string][]Index
 
 // Schema represents a table of database
 type Schema struct {
-	Model      interface{}
-	Value      reflect.Value
-	Type       reflect.Type
-	Name       string
-	TableName  string
-	FieldNames []interface{}
-	Fields     []*Field
-	fieldMap   map[string]*Field
-	Withs      map[string]*With
-	PrimaryKey *Field
-	IndexKeys  IndexList
-	UniqueKeys IndexList
-	FullKeys   IndexList
+	TablePrefix string
+	Model       interface{}
+	Value       reflect.Value
+	Type        reflect.Type
+	Name        string
+	TableName   string
+	FieldNames  []interface{}
+	Fields      []*Field
+	fieldMap    map[string]*Field
+	Withs       map[string]*With
+	PrimaryKey  *Field
+	IndexKeys   IndexList
+	UniqueKeys  IndexList
+	FullKeys    IndexList
 }
 
 // GetField returns field by name
@@ -126,7 +127,7 @@ func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
 }
 
 // Parse a struct to a Schema instance
-func Parse(dest interface{}, dialect IDialect) *Schema {
+func Parse(dest interface{}, dialect IDialect, tablePrefix string) *Schema {
 	modelValue := reflect.Indirect(reflect.ValueOf(dest))
 	modelType := modelValue.Type()
 
@@ -138,7 +139,7 @@ func Parse(dest interface{}, dialect IDialect) *Schema {
 	var tableName string
 	t, ok := model.(ITableName)
 	if !ok {
-		tableName = SnakeString(modelType.Name())
+		tableName = SnakeString(tablePrefix + modelType.Name())
 	} else {
 		tableName = t.TableName()
 	}
@@ -150,16 +151,17 @@ func Parse(dest interface{}, dialect IDialect) *Schema {
 	}
 
 	schema := &Schema{
-		Value:      modelValue,
-		Type:       modelType,
-		Model:      model,
-		Name:       modelType.Name(),
-		TableName:  tableName,
-		fieldMap:   make(map[string]*Field),
-		Withs:      make(map[string]*With),
-		IndexKeys:  make(IndexList),
-		UniqueKeys: make(IndexList),
-		FullKeys:   make(IndexList),
+		TablePrefix: tablePrefix,
+		Value:       modelValue,
+		Type:        modelType,
+		Model:       model,
+		Name:        modelType.Name(),
+		TableName:   tableName,
+		fieldMap:    make(map[string]*Field),
+		Withs:       make(map[string]*With),
+		IndexKeys:   make(IndexList),
+		UniqueKeys:  make(IndexList),
+		FullKeys:    make(IndexList),
 	}
 
 	for i := 0; i < modelType.NumField(); i++ {
