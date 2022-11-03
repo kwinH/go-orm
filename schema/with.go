@@ -37,7 +37,7 @@ func MakeWith(p reflect.StructField, dialect IDialect, tagSettings map[string]st
 			Name:          p.Name,
 			ModelType:     pType,
 			Relationships: make(map[interface{}][]reflect.Value, 0),
-			Schema:        Parse(reflect.New(pType).Interface(), dialect),
+			Schema:        Parse(reflect.New(pType).Interface(), dialect, schema1.TablePrefix),
 		}
 
 		foreignKey, ok := tagSettings["foreignKey"]

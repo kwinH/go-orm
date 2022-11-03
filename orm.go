@@ -11,10 +11,11 @@ import (
 )
 
 type Config struct {
-	connPool  drive.IConnPool
-	dialector schema.IDialect
-	Migrate   schema.IMigrator
-	Logger    logger.ILogger
+	TablePrefix string
+	connPool    drive.IConnPool
+	dialector   schema.IDialect
+	Migrate     schema.IMigrator
+	Logger      logger.ILogger
 }
 
 type DB struct {
@@ -33,6 +34,7 @@ type DB struct {
 	withDel    bool
 	omitEmpty  bool
 	startTime  time.Time
+	tableAlias string
 }
 
 func Open(dialector schema.IDialect, c ...*Config) (db *DB, err error) {

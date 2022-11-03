@@ -4,6 +4,7 @@ import (
 	sqlBuilder "github.com/kwinH/go-sql-builder"
 	"oorm/schema"
 	"reflect"
+	"strings"
 )
 
 func (d *DB) structToMap(args ...interface{}) ([]interface{}, []interface{}) {
@@ -58,7 +59,7 @@ func (d *DB) structToMap(args ...interface{}) ([]interface{}, []interface{}) {
 }
 
 func (d *DB) Parse(value interface{}) *schema.Schema {
-	s := *schema.Parse(value, d.dialector)
+	s := *schema.Parse(value, d.dialector, d.TablePrefix)
 	d.schema = &s
 	return d.schema
 }
@@ -73,6 +74,12 @@ func (d *DB) getTableInfo(value interface{}) *schema.Schema {
 		for _, v := range field {
 			name := v.(string)
 			schemaParse.FieldNames = append(schemaParse.FieldNames, name)
+
+			aliasIndex := strings.Index(name, " ")
+			if aliasIndex >= 0 {
+				name = name[:aliasIndex]
+			}
+
 			schemaParse.Fields = append(schemaParse.Fields, schemaParse.GetField(name))
 		}
 	}

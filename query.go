@@ -7,6 +7,13 @@ import (
 	"reflect"
 )
 
+func (d *DB) Alias(tableAlias string) *DB {
+	db := d.getInstance()
+
+	db.tableAlias = tableAlias
+	return db
+}
+
 func (d *DB) Raw(sql string, param ...interface{}) *DB {
 	db := d.getInstance()
 	db.sql = sql
@@ -38,7 +45,11 @@ func (d *DB) Get(value interface{}) error {
 		}
 
 		if db.b.GetTable() == "" {
-			db.b.Table(tableInfo.TableName)
+			tableName := tableInfo.TableName
+			if db.tableAlias != "" {
+				tableName = tableName + " as " + db.tableAlias
+			}
+			db.b.Table(tableName)
 		}
 
 		if db.withDel == false {

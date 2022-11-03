@@ -467,7 +467,7 @@ err := baseDB.Select("id", "name").Page(1, 10).Get(&users)
 
 ```go
 // SELECT `id`,`name` FROM `user` INNER JOIN `order` as `o` o.user_id=u.user_id and o.type=? INNER JOIN `contacts` as `c` c.user_id=u.user_id [1]
-err := baseDB.Select("id", "name").
+err := baseDB.Table("user u").Select("id", "name").
 Join("order o", "o.user_id=u.user_id and o.type=?", 1).
 Join("contacts c", "c.user_id=u.user_id").
 Get(&users)
@@ -479,12 +479,12 @@ Get(&users)
 
 ```go
 // SELECT `id`,`name` FROM `user` RIGHT JOIN `contacts` as `c` c.user_id=u.user_id []
-err := baseDB.Select("id", "name").
+err := baseDB.Table("user u").Select("id", "name").
 LeftJoin("contacts c", "c.user_id=u.user_id").
 Get(&users)
 
 // SELECT `id`,`name` FROM `user` LEFT JOIN `contacts` as `c` c.user_id=u.user_id []
-err := baseDB.Select("id", "name").
+err := baseDB.Table("user u").Select("id", "name").
 RightJoin("contacts c", "c.user_id=u.user_id").
 Get(&users)
 ```
