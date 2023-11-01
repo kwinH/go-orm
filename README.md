@@ -79,6 +79,7 @@ type User struct {
 ```
 
 ### 字段标签
+> 多个标签用`;`分割，例如：`db:"decimal:10,2;index:us|1"`
 
 | 标签名           | 说明                            |
 |---------------|-------------------------------|
@@ -190,7 +191,7 @@ res,err := baseDB.Table("user").Mix("id")
 res,err := baseDB.Table("user").Count()
 ```
 
-> 当分组查询的时候，会被当做子查询
+> 当`Group`分组查询的时候，会被当做子查询
 ```go
 // SELECT COUNT(*) FROM (SELECT `id` FROM `user` GROUP BY `status`) as `tmp1`
 res,err := baseDB.Table("user").Group("status").Select("id").Count()

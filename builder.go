@@ -184,3 +184,8 @@ func (d *DB) Join(table interface{}, condition string, params ...interface{}) *D
 	db.b.Joins(table, condition, "INNER", params...)
 	return db
 }
+
+func (d *DB) ToSql() (string, []interface{}) {
+	db := d.getInstance()
+	return db.b.ToSql()
+}
