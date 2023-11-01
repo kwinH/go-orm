@@ -1,16 +1,16 @@
-package mysql
+package sqlite3
 
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 	"math"
 	"oorm/drive"
 	"oorm/drive/mysql/migrator"
 	"oorm/schema"
 )
 
-const DriverName = "mysql"
+const DriverName = "sqlite3"
 
 type Config struct {
 	DSN  string
@@ -24,7 +24,7 @@ type Dialect struct {
 var _ schema.IDialect = (*Dialect)(nil)
 
 func (dialect *Dialect) Name() string {
-	return "mysql"
+	return "sqlite"
 }
 
 func (dialect *Dialect) GetDSN() string {
@@ -79,7 +79,6 @@ func (dialect *Dialect) DataTypeOf(field *schema.Field) (fieldType string) {
 }
 
 func (dialect *Dialect) Init() (connPool drive.IConnPool, err error) {
-
 	if dialect.Conn == nil {
 		db, err := sql.Open(DriverName, dialect.DSN)
 
