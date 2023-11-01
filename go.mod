@@ -1,4 +1,4 @@
-module oorm
+module github.com/kwinH/go-oorm
 
 go 1.16
 
