@@ -114,7 +114,17 @@ func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
 			return false
 		}
 
-		value = field.DefaultValue
+		field.Value = field.DefaultValue
+		return true
+	}
+
+	if field.DataType == Bool {
+		if value == true {
+			field.Value = 1
+		} else {
+			field.Value = 0
+		}
+		return true
 	}
 
 	if field.IsJson && field.DefaultValue == "" {
