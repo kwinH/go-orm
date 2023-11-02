@@ -3,8 +3,8 @@ package oorm
 import (
 	"crypto/md5"
 	"fmt"
+	"github.com/kwinH/go-oorm/drive/mysql"
 	sqlBuilder "github.com/kwinH/go-sql-builder"
-	"oorm/drive/mysql"
 	"testing"
 )
 

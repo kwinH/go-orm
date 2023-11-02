@@ -2,7 +2,7 @@ package oorm
 
 import (
 	"database/sql"
-	"oorm/schema"
+	"github.com/kwinH/go-oorm/schema"
 	"reflect"
 	"sync"
 	"time"

@@ -1,7 +1,7 @@
 package oorm
 
 import (
-	"oorm/schema"
+	"github.com/kwinH/go-oorm/schema"
 	"reflect"
 	"strings"
 	"sync"

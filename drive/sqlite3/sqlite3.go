@@ -3,11 +3,11 @@ package sqlite3
 import (
 	"database/sql"
 	"fmt"
+	"github.com/kwinH/go-oorm/drive"
+	"github.com/kwinH/go-oorm/drive/mysql/migrator"
+	"github.com/kwinH/go-oorm/schema"
 	_ "github.com/mattn/go-sqlite3"
 	"math"
-	"oorm/drive"
-	"oorm/drive/mysql/migrator"
-	"oorm/schema"
 )
 
 const DriverName = "sqlite3"
