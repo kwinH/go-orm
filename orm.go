@@ -3,10 +3,10 @@ package oorm
 import (
 	"database/sql"
 	"fmt"
+	"github.com/kwinH/go-oorm/drive"
+	"github.com/kwinH/go-oorm/logger"
+	"github.com/kwinH/go-oorm/schema"
 	"github.com/kwinH/go-sql-builder"
-	"oorm/drive"
-	"oorm/logger"
-	"oorm/schema"
 	"time"
 )
 

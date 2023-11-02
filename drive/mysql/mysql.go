@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/kwinH/go-oorm/drive"
+	"github.com/kwinH/go-oorm/drive/mysql/migrator"
+	"github.com/kwinH/go-oorm/schema"
 	"math"
-	"oorm/drive"
-	"oorm/drive/mysql/migrator"
-	"oorm/schema"
 )
 
 const DriverName = "mysql"

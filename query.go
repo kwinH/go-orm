@@ -3,7 +3,7 @@ package oorm
 import (
 	"database/sql"
 	"encoding/json"
-	"oorm/schema"
+	"github.com/kwinH/go-oorm/schema"
 	"reflect"
 )
 
