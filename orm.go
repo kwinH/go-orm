@@ -98,6 +98,10 @@ func (d *DB) Query(query string, args ...interface{}) (res *sql.Rows, err error)
 	return
 }
 
+func (d *DB) resetClone() {
+	d.clone = 0
+}
+
 func (d *DB) Clone() *DB {
 	db := &DB{
 		Config: d.Config,
@@ -152,10 +156,13 @@ func (d *DB) getInstance() *DB {
 	if d.clone == 0 {
 		return d.ClonePure(1)
 	}
-
 	return d
 }
 
 func (d *DB) DB() *sql.DB {
 	return d.connPool.(*sql.DB)
+}
+
+func (d *DB) NewDB() *DB {
+	return d.ClonePure()
 }

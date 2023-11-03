@@ -28,6 +28,8 @@ func (d *DB) WithDelete() *DB {
 }
 
 func (d *DB) Get(value interface{}) error {
+	defer d.resetClone()
+
 	db := d.getInstance()
 
 	tableInfo := db.getTableInfo(value)

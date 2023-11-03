@@ -15,6 +15,7 @@ func (d *DB) OmitEmpty() *DB {
 }
 
 func (d *DB) Create(args ...interface{}) (result int64, err error) {
+	defer d.resetClone()
 	db := d.getInstance()
 
 	fieldType := reflect.TypeOf(args[0])
@@ -183,6 +184,7 @@ func (d *DB) withCreate(arg interface{}, with *With, wg *sync.WaitGroup) {
 }
 
 func (d *DB) Delete(value interface{}, force ...bool) (affected int64, err error) {
+	defer d.resetClone()
 	db := d.getInstance()
 	tableInfo := db.getTableInfo(value)
 
@@ -244,6 +246,7 @@ func (d *DB) softDelete() (int64, error) {
 }
 
 func (d *DB) Update(arg interface{}) (affected int64, err error) {
+	defer d.resetClone()
 	db := d.getInstance()
 
 	argType := reflect.TypeOf(arg)
