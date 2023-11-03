@@ -129,7 +129,7 @@ func (m Migrator) getFieldSql(field *schema.Field) string {
 		}
 	}
 
-	if field.DefaultValue != "" {
+	if field.HavDefaultValue == true {
 		defaultValue = fmt.Sprintf(" DEFAULT %v", field.DefaultValue)
 	} else if field.DataType == schema.Time ||
 		field.DataType == schema.Json ||

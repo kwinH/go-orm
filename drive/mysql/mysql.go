@@ -70,7 +70,7 @@ func (dialect *Dialect) DataTypeOf(field *schema.Field) (fieldType string) {
 		}
 	case schema.Time:
 		if field.Size == 0 {
-			field.Size = 3
+			return "datetime"
 		}
 		return fmt.Sprintf("datetime(%d)", field.Size)
 	}

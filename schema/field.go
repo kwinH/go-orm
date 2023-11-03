@@ -1,37 +1,38 @@
 package schema
 
 import (
-	"database/sql"
 	sqlBuilder "github.com/kwinH/go-sql-builder"
 	"go/ast"
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type DataType string
 
-const DefaultNull = "NULL"
+type null string
+
+const DefaultNull null = "NULL"
 
 // Field represents a column of database
 type Field struct {
-	StructField   reflect.StructField
-	FieldName     string
-	Name          string
-	Type          string
-	PrimaryKey    bool
-	AutoIncrement bool
-	DefaultValue  string
-	Tag           string
-	TagSettings   map[string]string
-	DataType      DataType
-	Size          int64
-	Comment       string
-	Raw           bool
-	Decimal       string
-	IsJson        bool
-	Value         interface{}
+	StructField     reflect.StructField
+	FieldName       string
+	Name            string
+	Type            string
+	PrimaryKey      bool
+	AutoIncrement   bool
+	HavDefaultValue bool
+	DefaultValue    interface{}
+	Tag             string
+	TagSettings     map[string]string
+	DataType        DataType
+	Size            int64
+	Comment         string
+	Raw             bool
+	Decimal         string
+	IsJson          bool
+	Value           interface{}
 }
 
 const (
@@ -128,7 +129,12 @@ func parseTag(field *Field, schema *Schema) {
 	}
 
 	if v, ok := field.TagSettings["default"]; ok {
-		field.DefaultValue = v
+		field.HavDefaultValue = true
+		if v == "NULL" {
+			field.DefaultValue = DefaultNull
+		} else {
+			field.DefaultValue = v
+		}
 	}
 
 	if num, ok := field.TagSettings["size"]; ok {
@@ -208,29 +214,42 @@ func setDataType(field *Field) {
 	switch field.StructField.Type.Kind() {
 	case reflect.Bool:
 		field.DataType = Bool
+		return
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		field.DataType = Int
+		return
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		field.DataType = Uint
+		return
 	case reflect.Float32, reflect.Float64:
 		field.DataType = Float
+		return
 	case reflect.String:
 		field.DataType = String
+		return
 	case reflect.Struct:
-		fieldValue := reflect.New(field.StructField.Type)
-		if _, ok := fieldValue.Interface().(*time.Time); ok {
+		switch field.StructField.Type.String() {
+		case "sql.NullBool":
+			field.DataType = Bool
+			return
+		case "sql.NullInt16", "sql.NullInt32", "sql.NullInt64":
+			field.DataType = Int
+			return
+		case "sql.NullFloat64":
+			field.DataType = Float
+			return
+		case "sql.NullString":
+			field.DataType = String
+			return
+		case "sql.NullTime", "time.Time":
 			field.DataType = Time
-		} else if _, ok := fieldValue.Interface().(*sql.NullTime); ok {
-			field.DefaultValue = DefaultNull
-			field.DataType = Time
-		} else if fieldValue.Type().ConvertibleTo(reflect.TypeOf(time.Time{})) ||
-			fieldValue.Type().ConvertibleTo(reflect.TypeOf(&time.Time{})) {
-			field.DataType = Time
-		} else {
-			field.DataType = Json
+			return
 		}
+		field.DataType = Json
+		return
 	case reflect.Array, reflect.Slice, reflect.Map:
 		field.DataType = Json
+		return
 	}
 }
 
@@ -239,12 +258,28 @@ func setSize(field *Field) {
 		switch field.StructField.Type.Kind() {
 		case reflect.Int64, reflect.Uint, reflect.Uint64, reflect.Float64:
 			field.Size = 64
+			return
 		case reflect.Int8, reflect.Uint8:
 			field.Size = 8
+			return
 		case reflect.Int16, reflect.Uint16:
 			field.Size = 16
+			return
 		case reflect.Int, reflect.Int32, reflect.Uint32, reflect.Float32:
 			field.Size = 32
+			return
+		case reflect.Struct:
+			switch field.StructField.Type.String() {
+			case "sql.NullInt16":
+				field.Size = 16
+				return
+			case "sql.NullInt32":
+				field.Size = 32
+				return
+			case "sql.NullInt64", "sql.NullFloat64":
+				field.Size = 64
+				return
+			}
 		}
 	}
 }

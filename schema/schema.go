@@ -1,8 +1,10 @@
 package schema
 
 import (
+	"database/sql"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -88,7 +90,11 @@ func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
 		}
 
 		if field.DataType == Time {
-			field.Value = time.Now().Format("2006-01-02 15:04:05.000")
+			accuracy := strings.Repeat("0", int(field.Size))
+			if accuracy != "" {
+				accuracy = "." + accuracy
+			}
+			field.Value = time.Now().Format("2006-01-02 15:04:05" + accuracy)
 			return true
 		} else if field.Size == 32 && (field.DataType == Int || field.DataType == Uint) {
 			field.Value = time.Now().Unix()
@@ -109,12 +115,20 @@ func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
 			return false
 		}
 
-		if field.AutoIncrement ||
-			field.DefaultValue == DefaultNull {
+		if field.AutoIncrement {
 			return false
 		}
 
-		field.Value = field.DefaultValue
+		if field.DefaultValue == DefaultNull {
+			field.Value = sql.NullString{}
+			return true
+		}
+
+		if field.HavDefaultValue == true {
+			field.Value = field.DefaultValue
+		} else {
+			field.Value = value
+		}
 		return true
 	}
 
@@ -127,9 +141,13 @@ func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
 		return true
 	}
 
-	if field.IsJson && field.DefaultValue == "" {
-		value, _ = json.Marshal(value)
-		value = string(value.([]byte))
+	if field.IsJson {
+		val, err := json.Marshal(value)
+		if err != nil {
+			return false
+		}
+		field.Value = string(val)
+		return true
 	}
 
 	field.Value = value
