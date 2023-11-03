@@ -6,6 +6,7 @@ import (
 )
 
 func (d *DB) aggregate(sql string) (data int64, err error) {
+	defer d.resetClone()
 	db := d.getInstance()
 
 	if len(db.b.GetGroup()) > 0 {
