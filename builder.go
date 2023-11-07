@@ -189,3 +189,9 @@ func (d *DB) ToSql() (string, []interface{}) {
 	db := d.getInstance()
 	return db.b.ToSql()
 }
+
+func (d *DB) DuplicateKey(duplicateKey map[string]interface{}) *DB {
+	db := d.getInstance()
+	db.b.DuplicateKey(duplicateKey)
+	return d
+}

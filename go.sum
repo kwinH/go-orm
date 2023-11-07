@@ -1,6 +1,6 @@
 github.com/go-sql-driver/mysql v1.6.0 h1:BCTh4TKNUYmOmMUcQ3IipzF5prigylS7XXjEkfCHuOE=
 github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
-github.com/kwinH/go-sql-builder v1.0.4 h1:QB1poUDxDvIP5LDjF6X6Tg91/RwFTrfpR9NJtVUweNI=
-github.com/kwinH/go-sql-builder v1.0.4/go.mod h1:idm+w2r/N+JnyLgVm+oKHW1fGetMdeoPR6pCelDP1ms=
+github.com/kwinH/go-sql-builder v1.0.5 h1:jLjCD+WMVeAXSBv14cr4N67+cgDD7G3shfejbbKghis=
+github.com/kwinH/go-sql-builder v1.0.5/go.mod h1:idm+w2r/N+JnyLgVm+oKHW1fGetMdeoPR6pCelDP1ms=
 github.com/mattn/go-sqlite3 v1.14.17 h1:mCRHCLDUBXgpKAqIKsaAaAsrAlbkeomtRFKXh2L6YIM=
 github.com/mattn/go-sqlite3 v1.14.17/go.mod h1:2eHXhiwb8IkHr+BDWZGa96P6+rkvnG63S2DGjv9HUNg=

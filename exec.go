@@ -14,7 +14,7 @@ func (d *DB) OmitEmpty() *DB {
 	return db
 }
 
-func (d *DB) Create(args ...interface{}) (result int64, err error) {
+func (d *DB) insertReplace(mode string, args ...interface{}) (result int64, err error) {
 	defer d.resetClone()
 	db := d.getInstance()
 
@@ -50,7 +50,13 @@ func (d *DB) Create(args ...interface{}) (result int64, err error) {
 
 	argsMap, structParams := db.structToMap(args...)
 
-	sql, params := db.b.Insert(argsMap...)
+	var sql string
+	var params []interface{}
+	if mode == "REPLACE" {
+		sql, params = db.b.Replace(argsMap...)
+	} else {
+		sql, params = db.b.Insert(argsMap...)
+	}
 
 	res, err := db.Exec(sql, params...)
 
@@ -92,6 +98,18 @@ func (d *DB) Create(args ...interface{}) (result int64, err error) {
 	}
 
 	return res.RowsAffected()
+}
+
+func (d *DB) Create(args ...interface{}) (result int64, err error) {
+	return d.insertReplace("INSERT", args...)
+}
+
+func (d *DB) Insert(args ...interface{}) (result int64, err error) {
+	return d.insertReplace("INSERT", args...)
+}
+
+func (d *DB) Replace(args ...interface{}) (result int64, err error) {
+	return d.insertReplace("REPLACE", args...)
 }
 
 func (d *DB) withCreateGroup(withs []*With, args ...interface{}) (rowsAffected int64, err error) {
