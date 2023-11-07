@@ -6,7 +6,7 @@ import (
 
 func TestDB_Find(t *testing.T) {
 	var u User
-	err := baseDB.Where("id", ">", 0).Where("user_name", "kwin").First(&u)
+	err := orm.NewDB().Where("id", ">", 0).Where("user_name", "kwin").First(&u)
 
 	if err != nil {
 		t.Error(err)
@@ -16,7 +16,7 @@ func TestDB_Find(t *testing.T) {
 
 func TestDB_Get(t *testing.T) {
 	var u []User
-	err := baseDB.Where("id", ">", 0).Where("user_name", "kwin").Get(&u)
+	err := orm.NewDB().Where("id", ">", 0).Select("user_name", "status as c").Where("user_name", "kwin").Get(&u)
 
 	if err != nil {
 		t.Error(err)

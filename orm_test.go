@@ -4,7 +4,8 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/kwinH/go-oorm/drive/mysql"
-	sqlBuilder "github.com/kwinH/go-sql-builder"
+	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -45,7 +46,7 @@ var _ ISetAttr = (*User)(nil)
 
 func (u *User) GetAttr() {
 	//user := value.(*User)
-	u.UserName = "Aaa"
+	u.UserName = strings.Trim(u.UserName, "")
 	//fmt.Printf("%#v", value)
 }
 
@@ -55,11 +56,11 @@ func (u *User) SetAttr() {
 	}
 }
 
-var baseDB *DB
+var orm *Orm
 
 func init() {
 	var err error
-	baseDB, err = Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/gin_demo?parseTime=true"))
+	orm, err = Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/oorm_demo?parseTime=true"))
 
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
@@ -68,53 +69,29 @@ func init() {
 }
 
 func TestModel_get(t *testing.T) {
-	s := sqlBuilder.Raw("aaa")
+	var user User
+	user = User{}
 
-	fmt.Printf("%#v", s == "aaa")
+	s, _ := reflect.TypeOf(user).FieldByName("Model")
+	fmt.Printf("===%#v", s.Anonymous)
 
 	return
 	var users []User
 
-	db := baseDB.Select("id,user_name")
-	db.Clone().Where("id", ">", 1).Get(&users)
-	err := db.Clone().Get(&users)
-	//.With("Order.Test", func(db *DB) {
-	//	fmt.Printf("call db %p\n", db)
-	//	db.Where("order_no", "<>", "sss")
-	//}, func(db *DB) {
-	//	fmt.Printf("call db %p\n", db)
-	//	db.Where("test", "<>", "sss")
-	//}).Get(&users)
+	err := orm.NewDB().Select("id,created_at,updated_at,deleted_at,user_name,password,nickname,status,avatar").Where("id", ">", 1).Get(&users)
 
 	if err != nil {
 		fmt.Printf("==err: %#v\n", err)
 		return
 	}
 
-	//for _, user := range users {
-	//	fmt.Printf("user:%v\n", user.UserName)
-	//}
+	for _, user := range users {
+		fmt.Printf("user:%#v\n", user.UserName)
+	}
 }
 
 func TestModel_Insert(t *testing.T) {
-
-	type User20 struct {
-		Model
-		Name     string `db:"index:us|1"`
-		Password string
-		Status   int8
-		Age      int8
-		Sex      int8
-		Balance  float64 `db:"decimal:10,2"`
-	}
-
-	var user2 User20
-	baseDB.Omit("age", "sex").Get(&user2)
-
-}
-
-func TestModel_Insert1(t *testing.T) {
-	//baseDB.Table("user").Create(map[string]interface{}{
+	//orm.NewDB().Table("user").Create(map[string]interface{}{
 	//	"user_name": "aaa",
 	//})
 	//return
@@ -127,26 +104,14 @@ func TestModel_Insert1(t *testing.T) {
 		},
 	}
 
-	_, err := baseDB.Select("user_name,status").Create(&users)
-	//_, err = baseDB.Select("user_name,status").Create(&users)
+	_, err := orm.NewDB().Select("user_name,status").Create(&users)
+	//_, err = orm.NewDB().Select("user_name,status").Create(&users)
 	fmt.Printf("err:%#v\n", err)
 	//fmt.Printf("user:%v", users[0].Id)
 }
 
 func TestDB_Migrate(t *testing.T) {
-	type User struct {
-		Model
-		CreatedAt int
-		UpdatedAt int64
-		UserName  string `db:"index:us|1"`
-		Password  string
-		Nickname  string
-		Status    int8
-		Avatar    string
-		Balance   float64 `db:"decimal:10,2"`
-	}
-
 	value := User{}
 
-	baseDB.Migrate.Auto(value, true, true)
+	orm.NewDB().Migrate.Auto(value, true, true)
 }

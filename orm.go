@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+type Orm struct {
+	*Config
+}
+
 type Config struct {
 	TablePrefix string
 	connPool    drive.IConnPool
@@ -37,7 +41,7 @@ type DB struct {
 	tableAlias string
 }
 
-func Open(dialector schema.IDialect, c ...*Config) (db *DB, err error) {
+func Open(dialector schema.IDialect, c ...*Config) (orm *Orm, err error) {
 	var config *Config
 	if len(c) == 1 {
 		config = c[0]
@@ -53,13 +57,13 @@ func Open(dialector schema.IDialect, c ...*Config) (db *DB, err error) {
 		}
 	}
 
-	db = &DB{
+	orm = &Orm{
 		Config: config,
 	}
 
 	if config.dialector != nil {
-		db.connPool, err = config.dialector.Init()
-		db.Migrate = config.dialector.Migrate(db)
+		config.connPool, err = config.dialector.Init()
+		config.Migrate = config.dialector.Migrate(orm.NewDB())
 	}
 
 	return
@@ -159,10 +163,14 @@ func (d *DB) getInstance() *DB {
 	return d
 }
 
-func (d *DB) DB() *sql.DB {
-	return d.connPool.(*sql.DB)
+func (o *Orm) DBPool() *sql.DB {
+	return o.connPool.(*sql.DB)
 }
 
-func (d *DB) NewDB() *DB {
-	return d.ClonePure()
+func (o *Orm) NewDB() (db *DB) {
+	db = &DB{
+		Config: o.Config,
+	}
+
+	return
 }

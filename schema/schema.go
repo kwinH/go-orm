@@ -53,6 +53,7 @@ type Schema struct {
 	IndexKeys   IndexList
 	UniqueKeys  IndexList
 	FullKeys    IndexList
+	ExtendModel bool
 }
 
 // GetField returns field by name
@@ -63,13 +64,35 @@ func (schema *Schema) GetField(fieldName string) *Field {
 // RecordValues Values return the values of dest's member variables
 func (schema *Schema) RecordValues(omitEmpty, isUpdate bool) map[string]interface{} {
 	fieldValues := make(map[string]interface{})
-
+	haveCreatedAt := false
+	haveUpdatedAt := false
 	for _, field := range schema.Fields {
+		if schema.ExtendModel {
+			if haveCreatedAt == false && field.Name == "CreatedAt" {
+				haveCreatedAt = true
+			} else if haveUpdatedAt == false && field.Name == "UpdatedAt" {
+				haveUpdatedAt = true
+			}
+		}
+
 		if schema.RecordValue(field, omitEmpty, isUpdate) {
 			fieldValues[field.FieldName] = field.Value
 		}
 	}
 
+	if schema.ExtendModel && haveCreatedAt == false {
+		field := schema.GetField("CreatedAt")
+		if schema.RecordValue(field, omitEmpty, isUpdate) {
+			fieldValues[field.FieldName] = field.Value
+		}
+	}
+
+	if schema.ExtendModel && haveUpdatedAt == false {
+		field := schema.GetField("UpdatedAt")
+		if schema.RecordValue(field, omitEmpty, isUpdate) {
+			fieldValues[field.FieldName] = field.Value
+		}
+	}
 	return fieldValues
 }
 
@@ -196,6 +219,9 @@ func Parse(dest interface{}, dialect IDialect, tablePrefix string) *Schema {
 		p := modelType.Field(i)
 
 		if p.Anonymous {
+			if !schema.ExtendModel && p.Type.String() == "oorm.Model" {
+				schema.ExtendModel = true
+			}
 			defaultModelType := reflect.New(p.Type).Type().Elem()
 			for j := 0; j < defaultModelType.NumField(); j++ {
 				p1 := defaultModelType.Field(j)
