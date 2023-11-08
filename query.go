@@ -168,3 +168,21 @@ func (d *DB) rowHandle(tableInfo *schema.Schema, rows *sql.Rows) (dest reflect.V
 	}
 	return
 }
+
+func (d *DB) Value(field string, value interface{}) (err error) {
+	defer d.resetClone()
+	db := d.getInstance()
+
+	db.sql, db.bindings = db.b.Select(field).ToSql()
+
+	rows, err := db.Query(db.sql, db.bindings...)
+
+	if err != nil {
+		return
+	}
+
+	rows.Next()
+	rows.Scan(value)
+
+	return
+}
