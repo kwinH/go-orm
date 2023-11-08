@@ -23,3 +23,14 @@ func TestDB_Get(t *testing.T) {
 	}
 	t.Log(u)
 }
+
+func TestDB_Value(t *testing.T) {
+
+	var userName string
+	err := orm.NewDB().Table("user").Where("id", "=", 1).Value("user_name", &userName)
+
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("%#v", userName)
+}
