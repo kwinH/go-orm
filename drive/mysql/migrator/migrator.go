@@ -15,6 +15,7 @@ type Migrator struct {
 func (m Migrator) TableExist(tableName string) bool {
 	sql := fmt.Sprintf("SHOW TABLES LIKE '%v'", tableName)
 	res, _ := m.DB.Query(sql)
+	defer res.Close()
 
 	var table string
 	res.Next()
@@ -29,7 +30,7 @@ func (m Migrator) TableExist(tableName string) bool {
 func (m Migrator) TableInfo(tableName string) schema.TableInfo {
 	sql := fmt.Sprintf("SHOW CREATE TABLE `%v`", tableName)
 	res, _ := m.DB.Query(sql)
-
+	defer res.Close()
 	res.Next()
 
 	_ = res.Scan(&tableName, &sql)
@@ -317,7 +318,6 @@ func (m Migrator) Auto(value interface{}, modify, drop bool) error {
 	tableInfo := m.TableInfo(schema1.TableName)
 
 	for _, field := range schema1.Fields {
-
 		if fieldInfo, ok := tableInfo.FieldsInfo[field.FieldName]; !ok {
 			err := m.AddField(schema1.TableName, field)
 			if err != nil {

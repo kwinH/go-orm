@@ -62,14 +62,13 @@ func (d *DB) Get(value interface{}) error {
 	}
 
 	rows, err := db.Query(db.sql, db.bindings...)
+	defer rows.Close()
 
 	if err != nil {
 		return err
 	}
 
 	withs := db.makeWiths(tableInfo)
-
-	defer rows.Close()
 
 	var dests []reflect.Value
 	for rows.Next() {
@@ -176,6 +175,7 @@ func (d *DB) Value(field string, value interface{}) (err error) {
 	db.sql, db.bindings = db.b.Select(field).ToSql()
 
 	rows, err := db.Query(db.sql, db.bindings...)
+	defer rows.Close()
 
 	if err != nil {
 		return
