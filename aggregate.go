@@ -19,12 +19,11 @@ func (d *DB) aggregate(sql string) (data int64, err error) {
 	}
 
 	rows, err := db.Query(db.sql, db.bindings...)
-	defer rows.Close()
-
 	if err != nil {
 		return
 	}
 
+	defer rows.Close()
 	rows.Next()
 	rows.Scan(&data)
 

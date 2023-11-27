@@ -62,11 +62,11 @@ func (d *DB) Get(value interface{}) error {
 	}
 
 	rows, err := db.Query(db.sql, db.bindings...)
-	defer rows.Close()
-
 	if err != nil {
 		return err
 	}
+
+	defer rows.Close()
 
 	withs := db.makeWiths(tableInfo)
 
@@ -175,12 +175,11 @@ func (d *DB) Value(field string, value interface{}) (err error) {
 	db.sql, db.bindings = db.b.Select(field).ToSql()
 
 	rows, err := db.Query(db.sql, db.bindings...)
-	defer rows.Close()
-
 	if err != nil {
 		return
 	}
 
+	defer rows.Close()
 	rows.Next()
 	rows.Scan(value)
 
