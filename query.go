@@ -81,11 +81,6 @@ func (d *DB) Get(value interface{}) error {
 		}
 	}
 
-	err = rows.Err()
-	if err != nil {
-		return err
-	}
-
 	db.relationships(withs)
 
 	db.setDestRelationships(dests, withs, tableInfo.Value)

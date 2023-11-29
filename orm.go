@@ -82,11 +82,20 @@ func (d *DB) AddError(err error) error {
 func (d *DB) Exec(query string, args ...interface{}) (res sql.Result, err error) {
 	db := d.getInstance()
 
+	var stmt *sql.Stmt
 	if db.tx != nil {
-		res, err = db.tx.Exec(query, args...)
+		stmt, err = db.tx.Prepare(query)
 	} else {
-		res, err = db.connPool.Exec(query, args...)
+		stmt, err = db.connPool.Prepare(query)
 	}
+
+	if err != nil {
+		fmt.Printf("prepare failed, err:%v\n", err)
+		return
+	}
+	defer stmt.Close()
+
+	res, err = stmt.Exec(args...)
 
 	db.Logger.Trace(query, args, db.startTime)
 	return
@@ -95,7 +104,12 @@ func (d *DB) Exec(query string, args ...interface{}) (res sql.Result, err error)
 func (d *DB) Query(query string, args ...interface{}) (res *sql.Rows, err error) {
 	db := d.getInstance()
 
-	res, err = db.connPool.Query(query, args...)
+	stmt, err := db.connPool.Prepare(query)
+	if err != nil {
+		return
+	}
+
+	res, err = stmt.Query(args...)
 
 	db.Logger.Trace(query, args, db.startTime)
 
