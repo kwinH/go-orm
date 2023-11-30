@@ -108,6 +108,7 @@ func (d *DB) Query(query string, args ...interface{}) (res *sql.Rows, err error)
 	if err != nil {
 		return
 	}
+	defer stmt.Close()
 
 	res, err = stmt.Query(args...)
 
