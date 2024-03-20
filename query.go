@@ -66,8 +66,6 @@ func (d *DB) Get(value interface{}) error {
 		return err
 	}
 
-	defer rows.Close()
-
 	withs := db.makeWiths(tableInfo)
 
 	var dests []reflect.Value
@@ -80,6 +78,8 @@ func (d *DB) Get(value interface{}) error {
 			db.AddError(err)
 		}
 	}
+
+	rows.Close()
 
 	db.relationships(withs)
 

@@ -104,7 +104,13 @@ func (d *DB) Exec(query string, args ...interface{}) (res sql.Result, err error)
 func (d *DB) Query(query string, args ...interface{}) (res *sql.Rows, err error) {
 	db := d.getInstance()
 
-	stmt, err := db.connPool.Prepare(query)
+	var stmt *sql.Stmt
+	if db.tx != nil {
+		stmt, err = db.tx.Prepare(query)
+	} else {
+		stmt, err = db.connPool.Prepare(query)
+	}
+
 	if err != nil {
 		return
 	}
