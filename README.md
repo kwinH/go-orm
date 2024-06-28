@@ -118,7 +118,7 @@ AutoMigrate 用于自动迁移您的 schema，保持您的 schema 是最新的�
 	}
 
 
-	orm.NewDB().Migrate.Auto(User{}, true, true)
+	orm.Migrate.Auto(User{}, true, true)
 
 
 ```
@@ -163,38 +163,38 @@ type IMigrator interface {
 > 你可以在查询上链式调用更多的约束，最后使用 `Get` 方法获取结果
 
 ```go
-orm.NewDB().Get(&users)
+orm.Get(&users)
 ```
 
 ## 查询单个结果
 
 ```go
-orm.NewDB().Where("user_name","kwinwong").First(&user)
+orm.Where("user_name","kwinwong").First(&user)
 ```
 
 ## 根据主键检索
 
 ```go
-orm.NewDB().Where("user_name","kwinwong").Find(&user,1)
+orm.Where("user_name","kwinwong").Find(&user,1)
 ```
 
 ## 聚合查询
 > 查询构造器还提供了各种聚合方法，比如 `count`，`max`，`min`，`avg`，还有 `sum`。你可以在构造查询后调用任何方法：
 ```go
 // SELECT max(`id`)  FROM `user` []
-res,err := orm.NewDB().Table("user").Max("id")
+res,err := orm.Table("user").Max("id")
 
 // SELECT min(`id`) FROM `user` []
-res,err := orm.NewDB().Table("user").Mix("id")
+res,err := orm.Table("user").Mix("id")
 
 // SELECT count(*) as `c` FROM `user` []
-res,err := orm.NewDB().Table("user").Count()
+res,err := orm.Table("user").Count()
 ```
 
 > 当`Group`分组查询的时候，会被当做子查询
 ```go
 // SELECT COUNT(*) FROM (SELECT `id` FROM `user` GROUP BY `status`) as `tmp1`
-res,err := orm.NewDB().Table("user").Group("status").Select("id").Count()
+res,err := orm.Table("user").Group("status").Select("id").Count()
 ```
 
 > 如果需要分组查询：
@@ -207,7 +207,7 @@ res,err := orm.NewDB().Table("user").Group("status").Select("id").Count()
     
     var users []User
     // SELECT `status`,count(*) FROM `user` GROUP BY `status`
-    orm.NewDB().Group("status").Get(&users)
+    orm.Group("status").Get(&users)
 ```
 
 ## Select
@@ -219,18 +219,18 @@ res,err := orm.NewDB().Table("user").Group("status").Select("id").Count()
 ```go
 
 // SELECT `id`,`name` as `n` FROM `user` []
-err := orm.NewDB().Select("id", "name as n").Get(&users)
+err := orm.Select("id", "name as n").Get(&users)
 
-err := orm.NewDB().Select("id,name n").Get(&users)
+err := orm.Select("id,name n").Get(&users)
 
-err := orm.NewDB().Select([]string{"id", "name n"}).Get(&users)
+err := orm.Select([]string{"id", "name n"}).Get(&users)
 ```
 
 ## Omit 
 > 忽略字段
 ```go
 // SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`name`,`password`,`status`,`age`,`sex`,`balance` FROM `user` WHERE `user`.`deleted_at` IS NULL []
-err := orm.NewDB().Omit("age", "sex").Get(&users)
+err := orm.Omit("age", "sex").Get(&users)
 ```
 
 ## 原生表达式
@@ -245,26 +245,26 @@ err := orm.NewDB().Omit("age", "sex").Get(&users)
 	}
 
 	var u []User
-	err := orm.NewDB().Raw("SELECT sex,count(*) c from `user` group by sex having c>?", 100).Get(&u)
+	err := orm.Raw("SELECT sex,count(*) c from `user` group by sex having c>?", 100).Get(&u)
 ```
 
 ### 原生执行
 ```go
-res, err := orm.NewDB().Exec("UPDATE `user` SET `status`=1 WHERE id=?", 1)
+res, err := orm.Exec("UPDATE `user` SET `status`=1 WHERE id=?", 1)
 ```
 
 ### 原生字段
 
 ```go
 // SELECT DISTINCT mobile FROM `user` []
-err := orm.NewDB().Select(sqlBuilder.Raw("DISTINCT mobile")).Get(&users)
+err := orm.Select(sqlBuilder.Raw("DISTINCT mobile")).Get(&users)
 ```
 
 ### 原生条件
 
 ```go 
 // SELECT * FROM `user` WHERE price > IF(state = 'TX', 200, 100) []
-err := orm.NewDB().Where(sqlBuilder.Raw("price > IF(state = 'TX', 200, 100)")).Get(&users)
+err := orm.Where(sqlBuilder.Raw("price > IF(state = 'TX', 200, 100)")).Get(&users)
 ```
 
 ## Table
@@ -273,16 +273,17 @@ err := orm.NewDB().Where(sqlBuilder.Raw("price > IF(state = 'TX', 200, 100)")).G
 
 ```go
 //SELECT * FROM `users`
-orm.NewDB().Table("users").Get(&users)
+orm.Table("users").Get(&users)
 ```
 
 ### 子查询
 
 ```go
 // SELECT * FROM (SELECT * FROM (SELECT `sex`,count(*) as `c` FROM m_users GROUP BY `sex`) as `tmp2`) as `tmp1` []
-err := orm.NewDB().Table(func (m *sqlBuilder.Builder) {
+err := orm.Table(func (m *sqlBuilder.Builder) {
 m.Table(func (m *sqlBuilder.Builder) {
 m.Table("m_users").Select("sex", "count(*) as c").Group("sex")
+})
 }).Get(&users)
 ```
 
@@ -294,14 +295,14 @@ m.Table("m_users").Select("sex", "count(*) as c").Group("sex")
 
 ```go
 // SELECT `id`,`name` FROM `users` WHERE  `id` < ?  [100]
-err := orm.NewDB().Where("id", "<", 100).Get(&users)
+err := orm.Where("id", "<", 100).Get(&users)
 ```
 
 > 为了方便，如果你只是简单比较列值和给定数值是否相等，可以将数值直接作为 where 方法的第二个参数：
 
 ```go
 // SELECT `id`,`name` FROM `users` WHERE  `id` = ? [1]
-err := orm.NewDB().Where("id", 1).Get(&users)
+err := orm.Where("id", 1).Get(&users)
 ```
 
 ### OrWhere语句
@@ -310,7 +311,7 @@ err := orm.NewDB().Where("id", 1).Get(&users)
 
 ```go
 // SELECT * FROM `user` WHERE  `id` = ? OR  `name` like ? [1 %q%]
-err := orm.NewDB().Where("id", 1).OrWhere("name", "like", "%q%").Get(&users)
+err := orm.Where("id", 1).OrWhere("name", "like", "%q%").Get(&users)
 ```
 
 ### WhereBetween / WhereNotIn / WhereNotBetween / OrWhereNotBetween
@@ -321,10 +322,10 @@ err := orm.NewDB().Where("id", 1).OrWhere("name", "like", "%q%").Get(&users)
 
 ```go
 // SELECT * FROM `user` WHERE `sex` = ? AND `attribute` BETWEEN ? AND ? [1 2 3]
-err := orm.NewDB().Where("sex", 1).WhereBetween("attribute", 2, 3).Get(&users)
+err := orm.Where("sex", 1).WhereBetween("attribute", 2, 3).Get(&users)
 
 // SELECT * FROM `user` WHERE `sex` = ? OR `attribute` BETWEEN ? AND ? [1 2 3]
-err := orm.NewDB().Where("sex", 1).OrWhereBetween("attribute", []int{2, 3}).Get(&users)
+err := orm.Where("sex", 1).OrWhereBetween("attribute", []int{2, 3}).Get(&users)
 ```
 
 > `WhereNotBetween` 方法用于验证字段值是否在给定的两个值之外：
@@ -333,10 +334,10 @@ err := orm.NewDB().Where("sex", 1).OrWhereBetween("attribute", []int{2, 3}).Get(
 
 ```go
 // SELECT * FROM `user` WHERE `sex` = ? AND `attribute` NOT BETWEEN ? AND ? [1 2 3]
-err := orm.NewDB().Where("sex", 1).WhereNotBetween("attribute", 2, 3).Get(&users)
+err := orm.Where("sex", 1).WhereNotBetween("attribute", 2, 3).Get(&users)
 
 // SELECT * FROM `user` WHERE `sex` = ? OR `attribute` NOT BETWEEN ? AND ? [1 2 3]
-err := orm.NewDB().Where("sex", 1).OrWhereNotBetween("attribute", []int{2, 3}).Get(&users)
+err := orm.Where("sex", 1).OrWhereNotBetween("attribute", []int{2, 3}).Get(&users)
 ```
 
 ### WhereIn / WhereNotIn / OrWhereIn / OrWhereNotIn
@@ -347,20 +348,20 @@ err := orm.NewDB().Where("sex", 1).OrWhereNotBetween("attribute", []int{2, 3}).G
 
 ```go
 // SELECT * FROM `user` WHERE `sex` = ? AND `id` IN (?,?) [1 100 200]
-err := orm.NewDB().Where("sex", 1).WhereIn("id", 100, 200).Get(&users)
+err := orm.Where("sex", 1).WhereIn("id", 100, 200).Get(&users)
 
 // SELECT * FROM `user` WHERE `sex` = ? OR `id` IN (?,?) [1 100 200]
-err := orm.NewDB().Where("sex", 1).OrWhereIn("id", []int{100, 200}).Get(&users)
+err := orm.Where("sex", 1).OrWhereIn("id", []int{100, 200}).Get(&users)
 ```
 
 > `WhereNotIn` 方法验证给定列的值是否`不存在`给定的数组中：
 
 ```go
 // SELECT * FROM `user` WHERE `sex` = ? AND `id` NOT IN (?,?) [1 100 200]
-err := orm.NewDB().Where("sex", 1).WhereNotIn("id", []int{100, 200}).Get(&users)
+err := orm.Where("sex", 1).WhereNotIn("id", []int{100, 200}).Get(&users)
 
 // SELECT * FROM `user` WHERE `sex` = ? OR `id` NOT IN (?,?) [1 100 200]
-err := orm.NewDB().Where("sex", 1).OrWhereNotIn("id", []int{100, 200}).Get(&users)
+err := orm.Where("sex", 1).OrWhereNotIn("id", []int{100, 200}).Get(&users)
 ```
 
 ### ＷhereNull / ＷhereNotNull / ＯrWhereNull / ＯrWhereNotNull
@@ -369,10 +370,10 @@ err := orm.NewDB().Where("sex", 1).OrWhereNotIn("id", []int{100, 200}).Get(&user
 
 ```go
 // SELECT * FROM `user` WHERE `sex` = ? AND `deleted_at` IS NULL [1]
-err := orm.NewDB().Where("sex", 1).WhereNull("deleted_at").Get(&users)
+err := orm.Where("sex", 1).WhereNull("deleted_at").Get(&users)
 
 // SELECT * FROM `user` WHERE `sex` = ? OR `deleted_at` IS NULL [1]
-err := orm.NewDB().Where("sex", 1).OrWhereNull("deleted_at").Get(&users)
+err := orm.Where("sex", 1).OrWhereNull("deleted_at").Get(&users)
 
 ```
 
@@ -380,10 +381,10 @@ err := orm.NewDB().Where("sex", 1).OrWhereNull("deleted_at").Get(&users)
 
 ```go
 // SELECT * FROM `user` WHERE `sex` = ? AND `deleted_at` IS NOT NULL [1]
-err := orm.NewDB().Where("sex", 1).WhereNotNull("deleted_at").Get(&users)
+err := orm.Where("sex", 1).WhereNotNull("deleted_at").Get(&users)
 
 // SELECT * FROM `user` WHERE `sex` = ? OR `deleted_at` IS NOT NULL [1]
-err := orm.NewDB().Where("sex", 1).OrWhereNotNull("deleted_at").Get(&users)
+err := orm.Where("sex", 1).OrWhereNotNull("deleted_at").Get(&users)
 
 ```
 
@@ -393,7 +394,7 @@ err := orm.NewDB().Where("sex", 1).OrWhereNotNull("deleted_at").Get(&users)
 
 ```go
 // SELECT `id` FROM `user` WHERE  `id` <> ? OR  ( `age` > ? AND  `name` like ?) [1 18 %q%]
-sql, bindings := orm.NewDB().Where("id", "<>", 1).OrWhere(func (m *sqlBuilder.Builder) {
+sql, bindings := orm.Where("id", "<>", 1).OrWhere(func (m *sqlBuilder.Builder) {
 m.Where("age", ">", 18).
 Where("name", "like", "%q%")
 }).Get(&users)
@@ -403,7 +404,7 @@ Where("name", "like", "%q%")
 
 ```go
 // SELECT * FROM `user` WHERE  `id` <> ? AND  `id` in (SELECT `id` FROM `user_old` WHERE  `age` > ? AND  `name` like ?) [1 18 %q%]
-err := orm.NewDB().Where("id", "<>", 1).WhereIn("id", func (m *sqlBuilder.Builder) {
+err := orm.Where("id", "<>", 1).WhereIn("id", func (m *sqlBuilder.Builder) {
 m.Select("id").
 Table("user_old").
 Where("age", ">", 18).
@@ -418,14 +419,14 @@ Where("name", "like", "%q%")
 
 ```go
 // SELECT `id`,`name` FROM `user` ORDER BY `id` DESC []
-err := orm.NewDB().Select("id", "name").Order("id", "desc").Get(&users)
+err := orm.Select("id", "name").Order("id", "desc").Get(&users)
 ```
 
 > 如果你需要使用多个字段进行排序，你可以多次调用 `Order`
 
 ```go
 // SELECT `id`,`name` FROM `user` ORDER BY `id` DESC,`age` ASC []
-err := orm.NewDB().Select("id", "name").Order("id").Order("age", "asc").Get(&users)
+err := orm.Select("id", "name").Order("id").Order("age", "asc").Get(&users)
 
 ```
 
@@ -435,20 +436,20 @@ err := orm.NewDB().Select("id", "name").Order("id").Order("age", "asc").Get(&use
 
 ```go
 // SELECT `age`,count( * ) as `c` FROM `user` GROUP BY `age` HAVING  `c` > ? [10]
-err := orm.NewDB().Select("age", "count(*) as c").Group("age").Having("c", ">", 10).Get(&users)
+err := orm.Select("age", "count(*) as c").Group("age").Having("c", ">", 10).Get(&users)
 
 // SELECT `age`,`sex`,count( * ) as `c` FROM `user` GROUP BY `age`,`sex` HAVING  `c` > ? [10]
-err := orm.NewDB().Select("age", 'sex', "count(*) as c").Group("age", "sex").Having("c", ">", 10).Get(&users)
+err := orm.Select("age", 'sex', "count(*) as c").Group("age", "sex").Having("c", ">", 10).Get(&users)
 ```
 
 ## Limit
 
 ```go
 // SELECT `id`,`name` FROM `user` LIMIT 10 []
-err := orm.NewDB().Select("id", "name").Limit(10).Get(&users)
+err := orm.Select("id", "name").Limit(10).Get(&users)
 
 // SELECT `id`,`name` FROM `user` LIMIT 1,10 []
-err := orm.NewDB().Select("id", "name").Limit(1, 10).Get(&users)
+err := orm.Select("id", "name").Limit(1, 10).Get(&users)
 
 ```
 
@@ -456,7 +457,7 @@ err := orm.NewDB().Select("id", "name").Limit(1, 10).Get(&users)
 
 ```go
 //SELECT `id`,`name` FROM `user` LIMIT 0,10 []
-err := orm.NewDB().Select("id", "name").Page(1, 10).Get(&users)
+err := orm.Select("id", "name").Page(1, 10).Get(&users)
 ```
 
 ## Joins
@@ -468,7 +469,7 @@ err := orm.NewDB().Select("id", "name").Page(1, 10).Get(&users)
 
 ```go
 // SELECT `id`,`name` FROM `user` INNER JOIN `order` as `o` o.user_id=u.user_id and o.type=? INNER JOIN `contacts` as `c` c.user_id=u.user_id [1]
-err := orm.NewDB().Table("user u").Select("id", "name").
+err := orm.Table("user u").Select("id", "name").
 Join("order o", "o.user_id=u.user_id and o.type=?", 1).
 Join("contacts c", "c.user_id=u.user_id").
 Get(&users)
@@ -480,12 +481,12 @@ Get(&users)
 
 ```go
 // SELECT `id`,`name` FROM `user` RIGHT JOIN `contacts` as `c` c.user_id=u.user_id []
-err := orm.NewDB().Table("user u").Select("id", "name").
+err := orm.Table("user u").Select("id", "name").
 LeftJoin("contacts c", "c.user_id=u.user_id").
 Get(&users)
 
 // SELECT `id`,`name` FROM `user` LEFT JOIN `contacts` as `c` c.user_id=u.user_id []
-err := orm.NewDB().Table("user u").Select("id", "name").
+err := orm.Table("user u").Select("id", "name").
 RightJoin("contacts c", "c.user_id=u.user_id").
 Get(&users)
 ```
@@ -494,7 +495,7 @@ Get(&users)
 
 ```go
 // SELECT `id`,`name` FROM `user` as `u` INNER JOIN (SELECT * FROM `contacts` WHERE `id` > ?) as `tmp1` tmp1.user_id=u.user_id [100]
-err := orm.NewDB().Table("user u").Select("id", "name").
+err := orm.Table("user u").Select("id", "name").
 Join(func(b *sqlBuilder.Builder) {
 b.Table("contacts").Where("id", ">", 100)
 }, "tmp1.user_id=u.user_id").
@@ -618,6 +619,80 @@ func GetUser(db *oorm.DB) (*Contact, error) {
 }
 ```
 
+## 一对多
+
+> 一对一是最基本的关联关系。例如，一个 `User` 模型可能关联多个 `Contact` 模型。为了定义这个关联，我们要在 User 模型中定义一个数组 `Contact` 模型。
+
+### 声明
+```go
+type Contact struct{
+	oorm.Model
+	UserId uint
+	Mobile string
+	Email string
+}
+
+type User struct {
+	oorm.Model
+	UserName string
+	Password string
+	Nickname string
+	Status   string
+	Avatar  string
+	Contact  []Contact
+}
+```
+### 检索
+```go
+func GetUser(db *oorm.DB) (*User, error) {
+	var user = &User{}
+
+// SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_name`,`password`,`nickname`,`status`,`avatar` FROM `user` WHERE `id` = "1" LIMIT 1
+// SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_id`,`uid`,`mobile`,`email` FROM `contact` WHERE `user_id` in ("1")
+	err := db.With("Contact").Find(user, 1)
+
+	if err != nil {
+		return nil, err
+	}
+	return user, err
+}
+```
+> oorm 会基于模型名决定外键名称。在这种情况下，会自动假设 `Contact` 模型有一个 `UserId` 外键。如果你想覆盖这个约定，标签 foreignKey 来更改它：
+
+```go
+type User struct {
+    oorm.Model
+    UserName string
+    Password string
+    Nickname string
+    Status   string
+    Avatar   string
+    Contact  []Contact `db:"foreignKey:Uid"`
+}
+
+type Contact struct {
+    oorm.Model
+    Uid    uint
+    Mobile string
+    Email  string
+}
+```
+
+```go
+func GetUser(db *oorm.DB) (*User, error) {
+	var user = &User{}
+
+// SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_name`,`password`,`nickname`,`status`,`avatar` FROM `user` WHERE `id` = "1" LIMIT 1
+// SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_id`,`uid`,`mobile`,`email` FROM `contact` WHERE `uid` in ("1")
+	err := db.With("Contact").Find(user, 1)
+
+	if err != nil {
+		return nil, err
+	}
+	return user, err
+}
+```
+
 ## 插入 & 更新关联模型
 
 > 用`With`指定需要更新的关联模型
@@ -676,24 +751,24 @@ func CreatreUser(db *oorm.DB) (*User, error) {
 		Status:   1,
 	}
 
-	res, err := orm.NewDB().Create(&user)
+	res, err := orm.Create(&user)
 ```
 
 ## 用指定的字段创建记录
 
 ### 创建传递的选定字段
 ```go
-	res, err := orm.NewDB().Select("user_name,status").Create(&users)
+	res, err := orm.Select("user_name,status").Create(&users)
 ```
 
 ### 创建忽略传递的选定字段
 ```go
-	res, err := orm.NewDB().Omit("user_name,status").Create(&users)
+	res, err := orm.Omit("user_name,status").Create(&users)
 ```
 
 ### 创建忽略传递的空值字段
 ```go
-	res, err := orm.NewDB().OmitEmpty().Create(&users)
+	res, err := orm.OmitEmpty().Create(&users)
 ```
 
 ## 批量插入
@@ -709,7 +784,7 @@ func CreatreUser(db *oorm.DB) (*User, error) {
 		},
 	}
 
-	_, err := orm.NewDB().Create(&users)
+	_, err := orm.Create(&users)
 ``` 
 
 ```go
@@ -722,13 +797,13 @@ func CreatreUser(db *oorm.DB) (*User, error) {
         UserName: "kwin2",
         Status:   1,
     }
-	_, err := orm.NewDB().Create(&user1,&user2)
+	_, err := orm.Create(&user1,&user2)
 ```
 
 ## 根据Map创建
 ```go
 // INSERT INTO `user` (`name`,`age`) VALUES(?,?) [张三 18]
-sql, bindings, err = orm.NewDB().Create(map[string]interface{}{
+sql, bindings, err = orm.Create(map[string]interface{}{
 "name": "张三",
 "age":  18,
 })
@@ -741,7 +816,7 @@ sql, bindings, err = orm.NewDB().Create(map[string]interface{}{
 
 ```go
 // INSERT INTO `user` (`name`,`age`) VALUES(?,?),(?,?) [张三 18 李四 30]
-sql, bindings, err = orm.NewDB().Create(map[string]interface{}{
+sql, bindings, err = orm.Create(map[string]interface{}{
 "name": "张三",
 "age":  18,
 }, map[string]interface{}{
@@ -766,7 +841,7 @@ sql, bindings, err = orm.NewDB().Create(map[string]interface{}{
 	}
     
 	// UPDATE `user` SET `password`="123456",`nickname`="kwin",`status`=1,`avatar`="",`updated_at`="2022-10-28 11:17:53.303",`user_name`="kwin" WHERE `id` = 2
-	res, err := orm.NewDB().Update(&user)
+	res, err := orm.Update(&user)
 ```
 
 ## 根据条件更新
@@ -779,31 +854,31 @@ sql, bindings, err = orm.NewDB().Create(map[string]interface{}{
 	}
     
 	// UPDATE `user` SET `password`="123456",`nickname`="kwin",`status`=1,`avatar`="",`updated_at`="2022-10-28 11:17:53.303",`user_name`="kwin" WHERE `user_name` = "kwin"
-	res, err := orm.NewDB().Where("user_name","kwin").Update(&user)
+	res, err := orm.Where("user_name","kwin").Update(&user)
 ```
 
 ## 用指定的字段跟新记录
 
 ### 更新传递的选定字段
 ```go
-	res, err := orm.NewDB().Select("user_name,status").Update(&user)
+	res, err := orm.Select("user_name,status").Update(&user)
 ```
 
 ### 更新忽略传递的选定字段
 ```go
-	res, err := orm.NewDB().Omit("user_name,status").Update(&user)
+	res, err := orm.Omit("user_name,status").Update(&user)
 ```
 
 ### 更新忽略传递的空值字段
 ```go
-	res, err := orm.NewDB().OmitEmpty().Update(&user)
+	res, err := orm.OmitEmpty().Update(&user)
 ```
 
 
 ## 根据Map更新
 ```go
 // UPDATE `user` SET `name`=?,`age`=? WHERE `id` = ? [test 18 1]
-err := orm.NewDB().Table("user").Where("id", 1).Update(map[string]interface{}{
+err := orm.Table("user").Where("id", 1).Update(map[string]interface{}{
 "name": "test",
 "age":  18,
 })
@@ -815,13 +890,13 @@ err := orm.NewDB().Table("user").Where("id", 1).Update(map[string]interface{}{
 ```go
 // user.Id=1 不带条件 则主键不能为空
 // UPDATE `user` SET `deleted_at`=? WHERE `id` = ? ["2022-10-26 17:19:04.981",1]
-affected,err := orm.NewDB().Delete(&user)
+affected,err := orm.Delete(&user)
 ```
 ## 条件删除
 > 当带有其他条件，则主键不引用
 ```go
 // UPDATE `user` SET `deleted_at`=? WHERE `id` <> ? ["2022-10-26 17:19:04.981",100]
-affected,err := orm.NewDB().Where("id","<",100).Delete(&user)
+affected,err := orm.Where("id","<",100).Delete(&user)
 
 ```
 
@@ -834,7 +909,7 @@ affected,err := orm.NewDB().Where("id","<",100).Delete(&user)
 > 您可以使用 `WithDelete` 找到被软删除的记录
 ```go
 
-orm.NewDB().WithDelete().Get(&users)
+orm.WithDelete().Get(&users)
 ```
 
 ## 强制删除
@@ -842,14 +917,14 @@ orm.NewDB().WithDelete().Get(&users)
 
 ```go
 // delete from `user` WHERE `id` < ? [100]
-affected,err := orm.NewDB().Where("id","<",100).Delete(&user,true)
+affected,err := orm.Where("id","<",100).Delete(&user,true)
 ```
 
 # 数据库事务
 想要在数据库事务中运行一系列操作，你可以使用 `oorm` 的 `Transaction` 方法。如果在事务的闭包中出现了异常，事务将会自动回滚。如果闭包执行成功，事务将会自动提交。在使用 `Transaction` 方法时不需要手动回滚或提交：
 
 ```go
-	orm.NewDB().Transaction(func(db *DB) (err error) {
+	orm.Transaction(func(db *DB) (err error) {
         user := User{
         UserName: "test",
         }
@@ -860,7 +935,7 @@ affected,err := orm.NewDB().Where("id","<",100).Delete(&user,true)
             return err
         }
         
-        _, err = orm.NewDB().Where("user_name", "test").Delete(&user)
+        _, err = orm.Where("user_name", "test").Delete(&user)
         
         if err != nil {
             return err

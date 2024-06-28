@@ -27,6 +27,23 @@ func (d *DB) WithDelete() *DB {
 	return db
 }
 
+func (d *DB) Model(value interface{}) *DB {
+	db := d.getInstance()
+	tableInfo := db.getTableInfo(value)
+	return db.setTableName(tableInfo)
+}
+
+func (d *DB) setTableName(tableInfo *schema.Schema) *DB {
+	db := d.getInstance()
+	tableName := tableInfo.TableName
+
+	if db.tableAlias != "" {
+		tableName = tableName + " as " + db.tableAlias
+	}
+	db.b.Table(tableName)
+	return db
+}
+
 func (d *DB) Get(value interface{}) error {
 	defer d.resetClone()
 
@@ -47,15 +64,11 @@ func (d *DB) Get(value interface{}) error {
 		}
 
 		if db.b.GetTable() == "" {
-			tableName := tableInfo.TableName
-			if db.tableAlias != "" {
-				tableName = tableName + " as " + db.tableAlias
-			}
-			db.b.Table(tableName)
+			db = db.setTableName(tableInfo)
 		}
 
-		if db.withDel == false {
-			db.WhereNull(tableInfo.TableName + ".deleted_at")
+		if db.withDel == false && tableInfo.GetField("DeletedAt") != nil {
+			db.WhereNull(db.b.TableAlias + ".deleted_at")
 		}
 
 		db.sql, db.bindings = db.b.ToSql()
