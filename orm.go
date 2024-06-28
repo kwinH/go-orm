@@ -41,7 +41,7 @@ type DB struct {
 	tableAlias string
 }
 
-func Open(dialector schema.IDialect, c ...*Config) (orm *Orm, err error) {
+func Open(dialector schema.IDialect, c ...*Config) (db *DB, err error) {
 	var config *Config
 	if len(c) == 1 {
 		config = c[0]
@@ -57,13 +57,13 @@ func Open(dialector schema.IDialect, c ...*Config) (orm *Orm, err error) {
 		}
 	}
 
-	orm = &Orm{
+	db = &DB{
 		Config: config,
 	}
 
 	if config.dialector != nil {
-		config.connPool, err = config.dialector.Init()
-		config.Migrate = config.dialector.Migrate(orm.NewDB())
+		db.connPool, err = config.dialector.Init()
+		db.Migrate = config.dialector.Migrate(db)
 	}
 
 	return
@@ -132,7 +132,7 @@ func (d *DB) Clone() *DB {
 		Config: d.Config,
 		tx:     d.tx,
 
-		b:         d.b,
+		b:         *d.b.Clone(),
 		schema:    d.schema,
 		clone:     d.clone,
 		withDel:   d.withDel,
@@ -154,6 +154,7 @@ func (d *DB) Clone() *DB {
 		}
 	}
 
+	db.startTime = time.Now()
 	return db
 }
 
@@ -186,12 +187,4 @@ func (d *DB) getInstance() *DB {
 
 func (o *Orm) DBPool() *sql.DB {
 	return o.connPool.(*sql.DB)
-}
-
-func (o *Orm) NewDB() (db *DB) {
-	db = &DB{
-		Config: o.Config,
-	}
-
-	return
 }

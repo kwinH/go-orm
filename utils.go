@@ -71,8 +71,12 @@ func (d *DB) getTableInfo(value interface{}) *schema.Schema {
 	if len(field) > 0 {
 		schemaParse.FieldNames = []interface{}{}
 		schemaParse.Fields = []*schema.Field{}
+		var name string
+		var ok bool
 		for _, v := range field {
-			name := v.(string)
+			if name, ok = v.(string); !ok {
+				name = string(v.(sqlBuilder.Raw))
+			}
 			schemaParse.FieldNames = append(schemaParse.FieldNames, name)
 
 			aliasIndex := strings.Index(name, " ")
