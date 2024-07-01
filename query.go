@@ -44,6 +44,48 @@ func (d *DB) setTableName(tableInfo *schema.Schema) *DB {
 	return db
 }
 
+func (d *DB) rowsBuildMap(rows *sql.Rows, tableInfo *schema.Schema) error {
+	cols, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+
+	values := make([][]byte, len(cols))
+	scans := make([]interface{}, len(cols))
+	for i := range values {
+		scans[i] = &values[i]
+	}
+
+	if tableInfo.FirstType.Kind() == reflect.Map {
+		if rows.Next() {
+			if err := rows.Scan(scans...); err != nil {
+				return err
+			}
+			for k, v := range values {
+				key := cols[k]
+				tableInfo.Value.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(v))
+			}
+		}
+	} else if tableInfo.FirstType.Kind() == reflect.Slice {
+		index := 0
+		for rows.Next() {
+			if err := rows.Scan(scans...); err != nil {
+				return err
+			}
+			newMap := make(map[string]interface{})
+			tableInfo.Value.Set(reflect.Append(tableInfo.Value, reflect.ValueOf(newMap)))
+			mapValue := tableInfo.Value.Index(index)
+			for k, v := range values {
+				key := cols[k]
+				mapValue.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(v))
+			}
+			index++
+		}
+	}
+
+	return nil
+}
+
 func (d *DB) Get(value interface{}) error {
 	defer d.resetClone()
 
@@ -79,6 +121,12 @@ func (d *DB) Get(value interface{}) error {
 		return err
 	}
 
+	defer rows.Close()
+
+	if tableInfo.Type.Kind() == reflect.Map {
+		return db.rowsBuildMap(rows, tableInfo)
+	}
+
 	withs := db.makeWiths(tableInfo)
 
 	var dests []reflect.Value
@@ -91,8 +139,6 @@ func (d *DB) Get(value interface{}) error {
 			db.AddError(err)
 		}
 	}
-
-	rows.Close()
 
 	db.relationships(withs)
 
@@ -108,32 +154,21 @@ func (d *DB) Get(value interface{}) error {
 func (d *DB) Find(value interface{}, id int64) error {
 	db := d.getInstance()
 
-	tableInfo := db.Parse(value)
+	tableInfo := db.getTableInfo(value)
 
-	dest := reflect.Indirect(reflect.ValueOf(value))
-	destSlice := reflect.New(reflect.SliceOf(dest.Type())).Elem()
-	if err := db.Where(tableInfo.PrimaryKey.FieldName, id).Limit(1).Get(destSlice.Addr().Interface()); err != nil {
+	if err := db.Where(tableInfo.PrimaryKey.FieldName, id).Limit(1).Get(value); err != nil {
 		return err
 	}
-	if destSlice.Len() == 0 {
-		return ErrNotFind
-	}
-	dest.Set(destSlice.Index(0))
 	return nil
 }
 
 func (d *DB) First(value interface{}) error {
 	db := d.getInstance()
 
-	dest := reflect.Indirect(reflect.ValueOf(value))
-	destSlice := reflect.New(reflect.SliceOf(dest.Type())).Elem()
-	if err := db.Limit(1).Get(destSlice.Addr().Interface()); err != nil {
+	if err := db.Limit(1).Get(value); err != nil {
 		return err
 	}
-	if destSlice.Len() == 0 {
-		return ErrNotFind
-	}
-	dest.Set(destSlice.Index(0))
+
 	return nil
 }
 

@@ -25,6 +25,16 @@ func TestDB_Get(t *testing.T) {
 	t.Log(u)
 }
 
+func TestDB_GetMap(t *testing.T) {
+	var u = make([]map[string]any, 0)
+	err := orm.Table("user").Where("id", ">", 0).Select("user_name", "status as c").Get(&u)
+
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("%#v", u)
+}
+
 func TestDB_Value(t *testing.T) {
 
 	var userName string

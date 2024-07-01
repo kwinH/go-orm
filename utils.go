@@ -65,9 +65,14 @@ func (d *DB) Parse(value interface{}) *schema.Schema {
 }
 
 func (d *DB) getTableInfo(value interface{}) *schema.Schema {
-	schemaParse := d.Parse(value)
+	db := d.getInstance()
+	if db.schema != nil {
+		return db.schema
+	}
+	schemaParse := db.Parse(value)
 
-	field := d.getField()
+	field := db.getField()
+
 	if len(field) > 0 {
 		schemaParse.FieldNames = []interface{}{}
 		schemaParse.Fields = []*schema.Field{}
@@ -84,10 +89,17 @@ func (d *DB) getTableInfo(value interface{}) *schema.Schema {
 				name = name[:aliasIndex]
 			}
 
-			schemaParse.Fields = append(schemaParse.Fields, schemaParse.GetField(name))
+			fieldData := schemaParse.GetField(name)
+			if fieldData == nil {
+				fieldData = &schema.Field{
+					FieldName: name,
+				}
+			}
+			schemaParse.Fields = append(schemaParse.Fields, fieldData)
 		}
 	}
 
+	db.schema = schemaParse
 	return schemaParse
 }
 

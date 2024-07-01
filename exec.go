@@ -284,7 +284,7 @@ func (d *DB) Update(arg interface{}) (affected int64, err error) {
 		}
 
 		if len(db.withs) > 0 {
-			withs := db.makeWiths(db.Parse(arg))
+			withs := db.makeWiths(tableInfo)
 			if db.tx == nil {
 				db.Transaction(func(query *DB) error {
 					query = query.ClonePure(1)

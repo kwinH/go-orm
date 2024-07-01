@@ -42,6 +42,7 @@ type Schema struct {
 	TablePrefix string
 	Model       interface{}
 	Value       reflect.Value
+	FirstType   reflect.Type
 	Type        reflect.Type
 	Name        string
 	TableName   string
@@ -181,6 +182,7 @@ func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
 func Parse(dest interface{}, dialect IDialect, tablePrefix string) *Schema {
 	modelValue := reflect.Indirect(reflect.ValueOf(dest))
 	modelType := modelValue.Type()
+	firstType := modelType
 
 	if modelType.Kind() == reflect.Slice || modelType.Kind() == reflect.Array || modelType.Kind() == reflect.Ptr {
 		modelType = modelType.Elem()
@@ -204,6 +206,7 @@ func Parse(dest interface{}, dialect IDialect, tablePrefix string) *Schema {
 	schema := &Schema{
 		TablePrefix: tablePrefix,
 		Value:       modelValue,
+		FirstType:   firstType,
 		Type:        modelType,
 		Model:       model,
 		Name:        modelType.Name(),
@@ -215,24 +218,25 @@ func Parse(dest interface{}, dialect IDialect, tablePrefix string) *Schema {
 		FullKeys:    make(IndexList),
 	}
 
-	for i := 0; i < modelType.NumField(); i++ {
-		p := modelType.Field(i)
+	if modelType.Kind() == reflect.Struct {
+		for i := 0; i < modelType.NumField(); i++ {
+			p := modelType.Field(i)
 
-		if p.Anonymous {
-			if !schema.ExtendModel && p.Type.String() == "oorm.Model" {
-				schema.ExtendModel = true
+			if p.Anonymous {
+				if !schema.ExtendModel && p.Type.String() == "oorm.Model" {
+					schema.ExtendModel = true
+				}
+				defaultModelType := reflect.New(p.Type).Type().Elem()
+				for j := 0; j < defaultModelType.NumField(); j++ {
+					p1 := defaultModelType.Field(j)
+					parseField(p1, dialect, schema, true)
+				}
+			} else {
+				parseField(p, dialect, schema, false)
 			}
-			defaultModelType := reflect.New(p.Type).Type().Elem()
-			for j := 0; j < defaultModelType.NumField(); j++ {
-				p1 := defaultModelType.Field(j)
-				parseField(p1, dialect, schema, true)
-			}
-		} else {
-			parseField(p, dialect, schema, false)
+
 		}
-
 	}
-
 	schemas[cacheKey] = schema
 
 	return schema
