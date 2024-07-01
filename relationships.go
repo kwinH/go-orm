@@ -123,7 +123,7 @@ func (d *DB) setWithRelationships(with *With, wg *sync.WaitGroup) {
 	}
 }
 
-func (d *DB) setDestRelationships(dests []reflect.Value, withs []*With, destSlice reflect.Value) {
+func (d *DB) setDestRelationships(dests []reflect.Value, withs []*With, value reflect.Value) {
 	for _, dest := range dests {
 		wg := &sync.WaitGroup{}
 		for _, with := range withs {
@@ -131,7 +131,12 @@ func (d *DB) setDestRelationships(dests []reflect.Value, withs []*With, destSlic
 			d.setDestRelationship(with, dest, wg)
 		}
 		wg.Wait()
-		destSlice.Set(reflect.Append(destSlice, dest))
+		if value.Kind() == reflect.Slice {
+			value.Set(reflect.Append(value, dest))
+		} else {
+			value.Set(dest)
+			break
+		}
 	}
 }
 
