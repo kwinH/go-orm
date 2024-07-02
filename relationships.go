@@ -69,7 +69,7 @@ func (d *DB) makeWiths(tableInfo *schema.Schema) []*With {
 func (d *DB) getWiths(withs []*With, dest reflect.Value) {
 	for _, with := range withs {
 
-		var localKeyValue interface{}
+		var localKeyValue any
 
 		val := dest.FieldByName(with.LocalKey.Name)
 

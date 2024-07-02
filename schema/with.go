@@ -11,8 +11,8 @@ type With struct {
 	Name          string
 	LocalKey      *Field
 	ForeignKey    *Field
-	Values        []interface{}
-	Relationships map[interface{}][]reflect.Value
+	Values        []any
+	Relationships map[any][]reflect.Value
 }
 
 func MakeWith(p reflect.StructField, dialect IDialect, tagSettings map[string]string, schema1 *Schema) *With {
@@ -36,7 +36,7 @@ func MakeWith(p reflect.StructField, dialect IDialect, tagSettings map[string]st
 			Type:          withType,
 			Name:          p.Name,
 			ModelType:     pType,
-			Relationships: make(map[interface{}][]reflect.Value, 0),
+			Relationships: make(map[any][]reflect.Value, 0),
 			Schema:        Parse(reflect.New(pType).Interface(), dialect, schema1.TablePrefix),
 		}
 

@@ -14,7 +14,7 @@ func (d *DB) OmitEmpty() *DB {
 	return db
 }
 
-func (d *DB) insertReplace(mode string, args ...interface{}) (result int64, err error) {
+func (d *DB) insertReplace(mode string, args ...any) (result int64, err error) {
 	defer d.resetClone()
 	db := d.getInstance()
 
@@ -51,7 +51,7 @@ func (d *DB) insertReplace(mode string, args ...interface{}) (result int64, err 
 	argsMap, structParams := db.structToMap(args...)
 
 	var sql string
-	var params []interface{}
+	var params []any
 	if mode == "REPLACE" {
 		sql, params = db.b.Replace(argsMap...)
 	} else {
@@ -100,19 +100,19 @@ func (d *DB) insertReplace(mode string, args ...interface{}) (result int64, err 
 	return res.RowsAffected()
 }
 
-func (d *DB) Create(args ...interface{}) (result int64, err error) {
+func (d *DB) Create(args ...any) (result int64, err error) {
 	return d.insertReplace("INSERT", args...)
 }
 
-func (d *DB) Insert(args ...interface{}) (result int64, err error) {
+func (d *DB) Insert(args ...any) (result int64, err error) {
 	return d.insertReplace("INSERT", args...)
 }
 
-func (d *DB) Replace(args ...interface{}) (result int64, err error) {
+func (d *DB) Replace(args ...any) (result int64, err error) {
 	return d.insertReplace("REPLACE", args...)
 }
 
-func (d *DB) withCreateGroup(withs []*With, args ...interface{}) (rowsAffected int64, err error) {
+func (d *DB) withCreateGroup(withs []*With, args ...any) (rowsAffected int64, err error) {
 	wg := &sync.WaitGroup{}
 	field := d.getField()
 
@@ -141,7 +141,7 @@ func (d *DB) withCreateGroup(withs []*With, args ...interface{}) (rowsAffected i
 	return
 }
 
-func (d *DB) createModel(wg *sync.WaitGroup, withs []*With, rowsAffected chan int64, field []interface{}, arg interface{}) {
+func (d *DB) createModel(wg *sync.WaitGroup, withs []*With, rowsAffected chan int64, field []any, arg any) {
 	defer wg.Done()
 
 	if d.Error != nil {
@@ -166,7 +166,7 @@ func (d *DB) createModel(wg *sync.WaitGroup, withs []*With, rowsAffected chan in
 	wg1.Wait()
 }
 
-func (d *DB) withCreate(arg interface{}, with *With, wg *sync.WaitGroup) {
+func (d *DB) withCreate(arg any, with *With, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	argValue := reflect.ValueOf(arg).Elem()
@@ -201,7 +201,7 @@ func (d *DB) withCreate(arg interface{}, with *With, wg *sync.WaitGroup) {
 	}
 }
 
-func (d *DB) Delete(value interface{}, force ...bool) (affected int64, err error) {
+func (d *DB) Delete(value any, force ...bool) (affected int64, err error) {
 	defer d.resetClone()
 	db := d.getInstance()
 	tableInfo := db.getTableInfo(value)
@@ -258,12 +258,12 @@ func (d *DB) Delete(value interface{}, force ...bool) (affected int64, err error
 }
 
 func (d *DB) softDelete() (int64, error) {
-	return d.Update(map[string]interface{}{
+	return d.Update(map[string]any{
 		"deleted_at": time.Now().Format("2006-01-02 15:04:05.000"),
 	})
 }
 
-func (d *DB) Update(arg interface{}) (affected int64, err error) {
+func (d *DB) Update(arg any) (affected int64, err error) {
 	defer d.resetClone()
 	db := d.getInstance()
 
@@ -300,7 +300,7 @@ func (d *DB) Update(arg interface{}) (affected int64, err error) {
 		}
 	}
 
-	var argToMap map[string]interface{}
+	var argToMap map[string]any
 
 	switch kind {
 	case reflect.Struct:
@@ -321,7 +321,7 @@ func (d *DB) Update(arg interface{}) (affected int64, err error) {
 		}
 	case reflect.Map:
 		ok := false
-		if argToMap, ok = arg.(map[string]interface{}); ok {
+		if argToMap, ok = arg.(map[string]any); ok {
 			if len(d.b.GetWhere()) == 0 {
 				return 0, ErrMissingCondition
 			}
@@ -355,7 +355,7 @@ func (d *DB) Update(arg interface{}) (affected int64, err error) {
 	return result.RowsAffected()
 }
 
-func (d *DB) withUpdates(withs []*With, arg interface{}) (i int64, err error) {
+func (d *DB) withUpdates(withs []*With, arg any) (i int64, err error) {
 	wg := &sync.WaitGroup{}
 
 	argValue := reflect.ValueOf(arg).Elem()

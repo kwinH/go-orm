@@ -165,7 +165,7 @@ func (m Migrator) getIndex(indexType schema.IndexType, indexFields schema.IndexL
 		}
 
 		sql = strings.Trim(sql, ",") + "),\n"
-		fieldNames := make([]interface{}, fieldsLen)
+		fieldNames := make([]any, fieldsLen)
 		for i, field := range fields {
 			fieldNames[i] = field.Field.FieldName
 		}
@@ -309,7 +309,7 @@ func (m Migrator) UpdateIndex(schema1 *schema.Schema, schemaKeys schema.IndexLis
 	return
 }
 
-func (m Migrator) Auto(value interface{}, modify, drop bool) error {
+func (m Migrator) Auto(value any, modify, drop bool) error {
 	schema1 := m.DB.Parse(value)
 	if !m.TableExist(schema1.TableName) {
 		return m.Create(schema1)

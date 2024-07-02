@@ -20,7 +20,7 @@ func (d *DB) Begin() (*DB, error) {
 		db.Logger.Error("Transaction Begin %v", err)
 	}
 
-	db.Logger.Trace("Transaction Begin", []interface{}{}, start)
+	db.Logger.Trace("Transaction Begin", []any{}, start)
 
 	return db, err
 }
@@ -32,7 +32,7 @@ func (d *DB) Commit() (err error) {
 	if err != nil {
 		d.Logger.Error("Transaction Commit %v", err)
 	}
-	d.Logger.Trace("Transaction Commit", []interface{}{}, start)
+	d.Logger.Trace("Transaction Commit", []any{}, start)
 	return
 }
 
@@ -43,7 +43,7 @@ func (d *DB) Rollback() (err error) {
 	if err != nil {
 		d.Logger.Error("Transaction Rollback %v", err)
 	}
-	d.Logger.Trace("Transaction Rollback", []interface{}{}, start)
+	d.Logger.Trace("Transaction Rollback", []any{}, start)
 	return
 }
 

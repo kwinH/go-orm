@@ -23,7 +23,7 @@ type Field struct {
 	PrimaryKey      bool
 	AutoIncrement   bool
 	HavDefaultValue bool
-	DefaultValue    interface{}
+	DefaultValue    any
 	Tag             string
 	TagSettings     map[string]string
 	DataType        DataType
@@ -32,7 +32,7 @@ type Field struct {
 	Raw             bool
 	Decimal         string
 	IsJson          bool
-	Value           interface{}
+	Value           any
 }
 
 const (

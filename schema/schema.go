@@ -40,13 +40,13 @@ type IndexList map[string][]Index
 // Schema represents a table of database
 type Schema struct {
 	TablePrefix string
-	Model       interface{}
+	Model       any
 	Value       reflect.Value
 	FirstType   reflect.Type
 	Type        reflect.Type
 	Name        string
 	TableName   string
-	FieldNames  []interface{}
+	FieldNames  []any
 	Fields      []*Field
 	fieldMap    map[string]*Field
 	Withs       map[string]*With
@@ -63,8 +63,8 @@ func (schema *Schema) GetField(fieldName string) *Field {
 }
 
 // RecordValues Values return the values of dest's member variables
-func (schema *Schema) RecordValues(omitEmpty, isUpdate bool) map[string]interface{} {
-	fieldValues := make(map[string]interface{})
+func (schema *Schema) RecordValues(omitEmpty, isUpdate bool) map[string]any {
+	fieldValues := make(map[string]any)
 	haveCreatedAt := false
 	haveUpdatedAt := false
 	for _, field := range schema.Fields {
@@ -179,7 +179,7 @@ func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
 }
 
 // Parse a struct to a Schema instance
-func Parse(dest interface{}, dialect IDialect, tablePrefix string) *Schema {
+func Parse(dest any, dialect IDialect, tablePrefix string) *Schema {
 	modelValue := reflect.Indirect(reflect.ValueOf(dest))
 	modelType := modelValue.Type()
 	firstType := modelType
