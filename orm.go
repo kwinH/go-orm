@@ -34,7 +34,7 @@ type DB struct {
 	clone      int
 	Error      error
 	sql        string
-	bindings   []interface{}
+	bindings   []any
 	withDel    bool
 	omitEmpty  bool
 	startTime  time.Time
@@ -79,7 +79,7 @@ func (d *DB) AddError(err error) error {
 	return d.Error
 }
 
-func (d *DB) Exec(query string, args ...interface{}) (res sql.Result, err error) {
+func (d *DB) Exec(query string, args ...any) (res sql.Result, err error) {
 	db := d.getInstance()
 
 	var stmt *sql.Stmt
@@ -101,7 +101,7 @@ func (d *DB) Exec(query string, args ...interface{}) (res sql.Result, err error)
 	return
 }
 
-func (d *DB) Query(query string, args ...interface{}) (res *sql.Rows, err error) {
+func (d *DB) Query(query string, args ...any) (res *sql.Rows, err error) {
 	db := d.getInstance()
 
 	var stmt *sql.Stmt

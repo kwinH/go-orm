@@ -14,7 +14,7 @@ func (d *DB) Alias(tableAlias string) *DB {
 	return db
 }
 
-func (d *DB) Raw(sql string, param ...interface{}) *DB {
+func (d *DB) Raw(sql string, param ...any) *DB {
 	db := d.getInstance()
 	db.sql = sql
 	db.bindings = param
@@ -27,7 +27,7 @@ func (d *DB) WithDelete() *DB {
 	return db
 }
 
-func (d *DB) Model(value interface{}) *DB {
+func (d *DB) Model(value any) *DB {
 	db := d.getInstance()
 	tableInfo := db.getTableInfo(value)
 	return db.setTableName(tableInfo)
@@ -51,7 +51,7 @@ func (d *DB) rowsBuildMap(rows *sql.Rows, tableInfo *schema.Schema) error {
 	}
 
 	values := make([][]byte, len(cols))
-	scans := make([]interface{}, len(cols))
+	scans := make([]any, len(cols))
 	for i := range values {
 		scans[i] = &values[i]
 	}
@@ -72,7 +72,7 @@ func (d *DB) rowsBuildMap(rows *sql.Rows, tableInfo *schema.Schema) error {
 			if err := rows.Scan(scans...); err != nil {
 				return err
 			}
-			newMap := make(map[string]interface{})
+			newMap := make(map[string]any)
 			tableInfo.Value.Set(reflect.Append(tableInfo.Value, reflect.ValueOf(newMap)))
 			mapValue := tableInfo.Value.Index(index)
 			for k, v := range values {
@@ -86,7 +86,7 @@ func (d *DB) rowsBuildMap(rows *sql.Rows, tableInfo *schema.Schema) error {
 	return nil
 }
 
-func (d *DB) Get(value interface{}) error {
+func (d *DB) Get(value any) error {
 	defer d.resetClone()
 
 	db := d.getInstance()
@@ -151,7 +151,7 @@ func (d *DB) Get(value interface{}) error {
 	return nil
 }
 
-func (d *DB) Find(value interface{}, id int64) error {
+func (d *DB) Find(value any, id int64) error {
 	db := d.getInstance()
 
 	tableInfo := db.getTableInfo(value)
@@ -162,7 +162,7 @@ func (d *DB) Find(value interface{}, id int64) error {
 	return nil
 }
 
-func (d *DB) First(value interface{}) error {
+func (d *DB) First(value any) error {
 	db := d.getInstance()
 
 	if err := db.Limit(1).Get(value); err != nil {
@@ -174,7 +174,7 @@ func (d *DB) First(value interface{}) error {
 
 func (d *DB) rowHandle(tableInfo *schema.Schema, rows *sql.Rows) (dest reflect.Value, err error) {
 	dest = reflect.New(tableInfo.Type).Elem()
-	var values = make([]interface{}, len(tableInfo.Fields))
+	var values = make([]any, len(tableInfo.Fields))
 	var jsons = make(map[string]*[]byte)
 
 	for i, field := range tableInfo.Fields {
@@ -211,7 +211,7 @@ func (d *DB) rowHandle(tableInfo *schema.Schema, rows *sql.Rows) (dest reflect.V
 	return
 }
 
-func (d *DB) Value(field string, value interface{}) (err error) {
+func (d *DB) Value(field string, value any) (err error) {
 	defer d.resetClone()
 	db := d.getInstance()
 

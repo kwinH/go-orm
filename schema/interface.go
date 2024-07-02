@@ -38,11 +38,11 @@ type IMigrator interface {
 	DropIndex(indexKey, tableName string) error
 	UpdateIndex(schema1 *Schema, schemaKeys IndexList, keys map[string][]string, modify bool, indexType IndexType) (err error)
 
-	Auto(value interface{}, modify, drop bool) error
+	Auto(value any, modify, drop bool) error
 }
 
 type IDBParse interface {
-	Query(string, ...interface{}) (*sql.Rows, error)
-	Exec(string, ...interface{}) (sql.Result, error)
-	Parse(interface{}) *Schema
+	Query(string, ...any) (*sql.Rows, error)
+	Exec(string, ...any) (sql.Result, error)
+	Parse(any) *Schema
 }

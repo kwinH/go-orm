@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-func (d *DB) structToMap(args ...interface{}) ([]interface{}, []interface{}) {
+func (d *DB) structToMap(args ...any) ([]any, []any) {
 
-	params := make([]interface{}, 0)
-	structParams := make([]interface{}, 0)
+	params := make([]any, 0)
+	structParams := make([]any, 0)
 
 	for _, arg := range args {
 		isPtr := false
@@ -39,7 +39,7 @@ func (d *DB) structToMap(args ...interface{}) ([]interface{}, []interface{}) {
 		} else if kind == reflect.Map {
 			params = append(params, arg)
 		} else if kind == reflect.Slice {
-			ret := make([]interface{}, 0)
+			ret := make([]any, 0)
 			v := reflect.ValueOf(arg)
 			if isPtr {
 				v = v.Elem()
@@ -58,13 +58,13 @@ func (d *DB) structToMap(args ...interface{}) ([]interface{}, []interface{}) {
 	return params, structParams
 }
 
-func (d *DB) Parse(value interface{}) *schema.Schema {
+func (d *DB) Parse(value any) *schema.Schema {
 	s := *schema.Parse(value, d.dialector, d.TablePrefix)
 	d.schema = &s
 	return d.schema
 }
 
-func (d *DB) getTableInfo(value interface{}) *schema.Schema {
+func (d *DB) getTableInfo(value any) *schema.Schema {
 	db := d.getInstance()
 	if db.schema != nil {
 		return db.schema
@@ -74,7 +74,7 @@ func (d *DB) getTableInfo(value interface{}) *schema.Schema {
 	field := db.getField()
 
 	if len(field) > 0 {
-		schemaParse.FieldNames = []interface{}{}
+		schemaParse.FieldNames = []any{}
 		schemaParse.Fields = []*schema.Field{}
 		var name string
 		var ok bool
@@ -103,7 +103,7 @@ func (d *DB) getTableInfo(value interface{}) *schema.Schema {
 	return schemaParse
 }
 
-func (d *DB) getField() []interface{} {
+func (d *DB) getField() []any {
 	if len(d.b.GetField()) > 0 {
 		return d.b.GetField()
 	}
@@ -111,7 +111,7 @@ func (d *DB) getField() []interface{} {
 	if len(d.omitField) == 0 {
 		return d.schema.FieldNames
 	} else {
-		fieldNames := make([]interface{}, 0)
+		fieldNames := make([]any, 0)
 		for _, field := range d.schema.FieldNames {
 			fieldStr := ""
 			if _, ok := field.(sqlBuilder.Raw); ok {
