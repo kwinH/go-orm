@@ -2,7 +2,7 @@ package schema
 
 import (
 	"database/sql"
-	"github.com/kwinH/go-orm/drive"
+	"github.com/kwinh/go-orm/drive"
 )
 
 type IDialect interface {
