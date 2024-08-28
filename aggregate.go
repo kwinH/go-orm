@@ -2,7 +2,7 @@ package orm
 
 import (
 	"fmt"
-	sqlBuilder "github.com/kwinH/go-sql-builder"
+	sqlBuilder "github.com/kwinh/go-sql-builder"
 )
 
 func (d *DB) aggregate(sql string) (data int64, err error) {

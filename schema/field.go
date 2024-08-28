@@ -1,7 +1,7 @@
 package schema
 
 import (
-	sqlBuilder "github.com/kwinH/go-sql-builder"
+	sqlBuilder "github.com/kwinh/go-sql-builder"
 	"go/ast"
 	"reflect"
 	"strconv"

@@ -1,7 +1,7 @@
 package orm
 
 import (
-	sqlBuilder "github.com/kwinH/go-sql-builder"
+	sqlBuilder "github.com/kwinh/go-sql-builder"
 	"testing"
 )
 

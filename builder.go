@@ -1,6 +1,6 @@
 package orm
 
-import "github.com/kwinH/go-sql-builder"
+import "github.com/kwinh/go-sql-builder"
 
 func (d *DB) Select(args ...any) *DB {
 	db := d.getInstance()
