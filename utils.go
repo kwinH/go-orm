@@ -1,7 +1,7 @@
 package orm
 
 import (
-	"github.com/kwinH/go-oorm/schema"
+	"github.com/kwinH/go-orm/schema"
 	sqlBuilder "github.com/kwinH/go-sql-builder"
 	"reflect"
 	"strings"

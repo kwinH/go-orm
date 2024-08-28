@@ -2,7 +2,7 @@ package orm
 
 import (
 	"fmt"
-	"github.com/kwinH/go-oorm/drive/sqlite3"
+	"github.com/kwinH/go-orm/drive/sqlite3"
 	"testing"
 )
 

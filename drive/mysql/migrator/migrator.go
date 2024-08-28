@@ -2,7 +2,7 @@ package migrator
 
 import (
 	"fmt"
-	"github.com/kwinH/go-oorm/schema"
+	"github.com/kwinH/go-orm/schema"
 	"sort"
 	"strings"
 )

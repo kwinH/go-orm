@@ -3,9 +3,9 @@ package orm
 import (
 	"database/sql"
 	"fmt"
-	"github.com/kwinH/go-oorm/drive"
-	"github.com/kwinH/go-oorm/logger"
-	"github.com/kwinH/go-oorm/schema"
+	"github.com/kwinH/go-orm/drive"
+	"github.com/kwinH/go-orm/logger"
+	"github.com/kwinH/go-orm/schema"
 	"github.com/kwinH/go-sql-builder"
 	"time"
 )

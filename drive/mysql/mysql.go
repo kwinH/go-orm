@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/kwinH/go-oorm/drive"
-	"github.com/kwinH/go-oorm/drive/mysql/migrator"
-	"github.com/kwinH/go-oorm/schema"
+	"github.com/kwinH/go-orm/drive"
+	"github.com/kwinH/go-orm/drive/mysql/migrator"
+	"github.com/kwinH/go-orm/schema"
 	"math"
 )
 

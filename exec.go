@@ -2,7 +2,7 @@ package orm
 
 import (
 	"database/sql"
-	"github.com/kwinH/go-oorm/schema"
+	"github.com/kwinH/go-orm/schema"
 	"reflect"
 	"sync"
 	"time"
