@@ -1,4 +1,4 @@
-package oorm
+package orm
 
 // IGetAttr 访问器
 type IGetAttr interface {

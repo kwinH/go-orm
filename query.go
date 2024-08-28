@@ -1,4 +1,4 @@
-package oorm
+package orm
 
 import (
 	"database/sql"
@@ -140,6 +140,10 @@ func (d *DB) Get(value any) error {
 		}
 	}
 
+	if len(dests) == 0 {
+		return ErrNotFind
+	}
+
 	db.relationships(withs)
 
 	db.setDestRelationships(dests, withs, tableInfo.Value)
@@ -215,7 +219,7 @@ func (d *DB) Value(field string, value any) (err error) {
 	defer d.resetClone()
 	db := d.getInstance()
 
-	db.sql, db.bindings = db.b.Select(field).ToSql()
+	db.sql, db.bindings = db.b.Select(field).Limit(1).ToSql()
 
 	rows, err := db.Query(db.sql, db.bindings...)
 	if err != nil {
