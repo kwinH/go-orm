@@ -3,9 +3,9 @@ package sqlite3
 import (
 	"database/sql"
 	"fmt"
-	"github.com/kwinH/go-orm/drive"
-	"github.com/kwinH/go-orm/drive/mysql/migrator"
-	"github.com/kwinH/go-orm/schema"
+	"github.com/kwinh/go-orm/drive"
+	"github.com/kwinh/go-orm/drive/mysql/migrator"
+	"github.com/kwinh/go-orm/schema"
 	_ "github.com/mattn/go-sqlite3"
 	"math"
 )

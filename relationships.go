@@ -1,7 +1,7 @@
 package orm
 
 import (
-	"github.com/kwinH/go-orm/schema"
+	"github.com/kwinh/go-orm/schema"
 	"reflect"
 	"strings"
 	"sync"

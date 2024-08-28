@@ -3,7 +3,7 @@ package orm
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/kwinH/go-orm/drive/mysql"
+	"github.com/kwinh/go-orm/drive/mysql"
 	"strings"
 	"testing"
 )

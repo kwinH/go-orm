@@ -1,4 +1,4 @@
-module github.com/kwinH/go-orm
+module github.com/kwinh/go-orm
 
 go 1.21
 
