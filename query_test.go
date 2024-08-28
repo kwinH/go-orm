@@ -1,4 +1,4 @@
-package oorm
+package orm
 
 import (
 	sqlBuilder "github.com/kwinH/go-sql-builder"

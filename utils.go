@@ -1,4 +1,4 @@
-package oorm
+package orm
 
 import (
 	"github.com/kwinH/go-oorm/schema"

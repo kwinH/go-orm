@@ -20,7 +20,7 @@
 ## mysql
 ```go
     dsn := "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-	orm, err = oorm.Open(mysql.Open(dsn), &oorm.Config{})
+	orm, err = orm.Open(mysql.Open(dsn), &oorm.Config{})
 
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
@@ -177,6 +177,14 @@ orm.Where("user_name","kwinwong").First(&user)
 ```go
 orm.Where("user_name","kwinwong").Find(&user,1)
 ```
+
+## 查询单个字段
+
+```go
+var id int
+orm.Where("user_name","kwinwong").Value("id",&id)
+```
+
 
 ## 聚合查询
 > 查询构造器还提供了各种聚合方法，比如 `count`，`max`，`min`，`avg`，还有 `sum`。你可以在构造查询后调用任何方法：

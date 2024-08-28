@@ -1,4 +1,4 @@
-package oorm
+package orm
 
 import (
 	"crypto/md5"
@@ -34,7 +34,7 @@ var orm *DB
 
 func init() {
 	var err error
-	orm, err = Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/oorm_demo?parseTime=true"))
+	orm, err = Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/orm_demo?parseTime=true"))
 
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
