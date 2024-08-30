@@ -24,10 +24,6 @@ const (
 	FULLTEXTKEY IndexType = "FULLTEXT KEY"
 )
 
-type TimeType int64
-
-var TimeReflectType = reflect.TypeOf(time.Time{})
-
 var schemas = make(map[string]*Schema)
 
 type Index struct {
@@ -65,13 +61,13 @@ func (schema *Schema) GetField(fieldName string) *Field {
 // RecordValues Values return the values of dest's member variables
 func (schema *Schema) RecordValues(omitEmpty, isUpdate bool) map[string]any {
 	fieldValues := make(map[string]any)
-	haveCreatedAt := false
-	haveUpdatedAt := false
+	haveCreatedAt, haveUpdatedAt := false, false
+
 	for _, field := range schema.Fields {
 		if schema.ExtendModel {
-			if haveCreatedAt == false && field.Name == "CreatedAt" {
+			if !haveCreatedAt && field.Name == "CreatedAt" {
 				haveCreatedAt = true
-			} else if haveUpdatedAt == false && field.Name == "UpdatedAt" {
+			} else if !haveUpdatedAt && field.Name == "UpdatedAt" {
 				haveUpdatedAt = true
 			}
 		}
@@ -81,87 +77,53 @@ func (schema *Schema) RecordValues(omitEmpty, isUpdate bool) map[string]any {
 		}
 	}
 
-	if schema.ExtendModel && haveCreatedAt == false {
-		field := schema.GetField("CreatedAt")
-		if schema.RecordValue(field, omitEmpty, isUpdate) {
-			fieldValues[field.FieldName] = field.Value
+	if schema.ExtendModel {
+		if !haveCreatedAt {
+			schema.addDefaultTimeValue(fieldValues, "CreatedAt", omitEmpty, isUpdate)
 		}
-	}
-
-	if schema.ExtendModel && haveUpdatedAt == false {
-		field := schema.GetField("UpdatedAt")
-		if schema.RecordValue(field, omitEmpty, isUpdate) {
-			fieldValues[field.FieldName] = field.Value
+		if !haveUpdatedAt {
+			schema.addDefaultTimeValue(fieldValues, "UpdatedAt", omitEmpty, isUpdate)
 		}
 	}
 	return fieldValues
 }
 
+func (schema *Schema) addDefaultTimeValue(fieldValues map[string]any, fieldName string, omitEmpty, isUpdate bool) {
+	field := schema.GetField(fieldName)
+	if schema.RecordValue(field, omitEmpty, isUpdate) {
+		fieldValues[field.FieldName] = field.Value
+	}
+}
+
 func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
-	if field.Raw {
+	if field.Raw || field.AutoIncrement {
 		return false
 	}
 
-	if field.AutoIncrement {
-		return false
-	}
-
-	if field.Name == "CreatedAt" ||
-		field.Name == "UpdatedAt" {
-
+	if field.Name == "CreatedAt" || field.Name == "UpdatedAt" {
 		if isUpdate && field.Name == "CreatedAt" {
 			return false
 		}
-
-		if field.DataType == Time {
-			accuracy := strings.Repeat("0", int(field.Size))
-			if accuracy != "" {
-				accuracy = "." + accuracy
-			}
-			field.Value = time.Now().Format("2006-01-02 15:04:05" + accuracy)
-			return true
-		} else if field.Size == 32 && (field.DataType == Int || field.DataType == Uint) {
-			field.Value = time.Now().Unix()
-			return true
-		} else if field.Size == 64 && field.DataType == Int {
-			field.Value = time.Now().UnixMilli()
-			return true
-		} else if field.Size == 64 && field.DataType == Uint {
-			field.Value = time.Now().UnixMicro()
-			return true
-		}
+		return schema.setTimeValue(field)
 	}
 
 	destVal := schema.Value.FieldByName(field.Name)
 	value := destVal.Interface()
+
 	if destVal.IsZero() {
-		if omitEmpty {
+		if omitEmpty || field.AutoIncrement {
 			return false
 		}
-
-		if field.AutoIncrement {
-			return false
-		}
-
 		if field.DefaultValue == DefaultNull {
 			field.Value = sql.NullString{}
 			return true
 		}
-
-		if field.HavDefaultValue == true {
-			field.Value = field.DefaultValue
-		} else {
-			field.Value = value
-		}
+		field.Value = schema.getDefaultFieldValue(field, value)
 		return true
 	}
 
 	if field.DataType == Bool {
-		if value == true {
-			field.Value = 1
-		} else {
-			field.Value = 0
-		}
+		field.Value = boolToInt(value.(bool))
 		return true
 	}
 
@@ -178,6 +140,45 @@ func (schema *Schema) RecordValue(field *Field, omitEmpty, isUpdate bool) bool {
 	return true
 }
 
+func (schema *Schema) setTimeValue(field *Field) bool {
+	now := time.Now()
+	switch {
+	case field.DataType == Time:
+		field.Value = formatTime(now, field.Size)
+	case field.Size == 32 && (field.DataType == Int || field.DataType == Uint):
+		field.Value = now.Unix()
+	case field.Size == 64 && field.DataType == Int:
+		field.Value = now.UnixMilli()
+	case field.Size == 64 && field.DataType == Uint:
+		field.Value = now.UnixMicro()
+	default:
+		return false
+	}
+	return true
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func formatTime(t time.Time, size int64) string {
+	accuracy := strings.Repeat("0", int(size))
+	if accuracy != "" {
+		accuracy = "." + accuracy
+	}
+	return t.Format("2006-01-02 15:04:05" + accuracy)
+}
+
+func (schema *Schema) getDefaultFieldValue(field *Field, defaultValue any) any {
+	if field.HavDefaultValue {
+		return field.DefaultValue
+	}
+	return defaultValue
+}
+
 // Parse a struct to a Schema instance
 func Parse(dest any, dialect IDialect, tablePrefix string) *Schema {
 	modelValue := reflect.Indirect(reflect.ValueOf(dest))
@@ -189,21 +190,31 @@ func Parse(dest any, dialect IDialect, tablePrefix string) *Schema {
 	}
 
 	model := reflect.New(modelType).Interface()
-	var tableName string
-	t, ok := model.(ITableName)
-	if !ok {
-		tableName = SnakeString(tablePrefix + modelType.Name())
-	} else {
-		tableName = t.TableName()
-	}
+	tableName := getTableName(model, tablePrefix)
 
-	cacheKey := dialect.Name() + dialect.GetDSN() + tableName
+	cacheKey := dialect.Name() + dialect.GetDSN() + tablePrefix + tableName
 	if schema, ok := schemas[cacheKey]; ok {
 		schema.Value = modelValue
 		return schema
 	}
 
-	schema := &Schema{
+	schema := createSchema(tablePrefix, modelValue, firstType, modelType, model, tableName)
+
+	parseStructFields(schema, modelType, dialect)
+
+	schemas[cacheKey] = schema
+	return schema
+}
+
+func getTableName(model any, tablePrefix string) string {
+	if t, ok := model.(ITableName); ok {
+		return t.TableName()
+	}
+	return SnakeString(tablePrefix + reflect.TypeOf(model).Elem().Name())
+}
+
+func createSchema(tablePrefix string, modelValue reflect.Value, firstType, modelType reflect.Type, model any, tableName string) *Schema {
+	return &Schema{
 		TablePrefix: tablePrefix,
 		Value:       modelValue,
 		FirstType:   firstType,
@@ -217,29 +228,28 @@ func Parse(dest any, dialect IDialect, tablePrefix string) *Schema {
 		UniqueKeys:  make(IndexList),
 		FullKeys:    make(IndexList),
 	}
+}
 
-	if modelType.Kind() == reflect.Struct {
-		for i := 0; i < modelType.NumField(); i++ {
-			p := modelType.Field(i)
-
-			if p.Anonymous {
-				if !schema.ExtendModel && p.Type.String() == "oorm.Model" {
-					schema.ExtendModel = true
-				}
-				defaultModelType := reflect.New(p.Type).Type().Elem()
-				for j := 0; j < defaultModelType.NumField(); j++ {
-					p1 := defaultModelType.Field(j)
-					parseField(p1, dialect, schema, true)
-				}
-			} else {
-				parseField(p, dialect, schema, false)
-			}
-
+func parseStructFields(schema *Schema, modelType reflect.Type, dialect IDialect) {
+	for i := 0; i < modelType.NumField(); i++ {
+		field := modelType.Field(i)
+		if field.Anonymous {
+			parseAnonymousField(schema, field, dialect)
+		} else {
+			parseField(field, dialect, schema, false)
 		}
 	}
-	schemas[cacheKey] = schema
+}
 
-	return schema
+func parseAnonymousField(schema *Schema, field reflect.StructField, dialect IDialect) {
+	if !schema.ExtendModel && field.Type.String() == "orm.Model" {
+		schema.ExtendModel = true
+	}
+	defaultModelType := reflect.New(field.Type).Type().Elem()
+	for j := 0; j < defaultModelType.NumField(); j++ {
+		p1 := defaultModelType.Field(j)
+		parseField(p1, dialect, schema, true)
+	}
 }
 
 func MakeSlice(ModelType reflect.Type) reflect.Value {

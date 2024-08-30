@@ -1,12 +1,12 @@
 # 简介
 
-> `oorm`是一款功能全面的数据库操作工具，提供一个漂亮、简洁的链式调用方式来实现与数据库的交互。
+> `orm`是一款功能全面的数据库操作工具，提供一个漂亮、简洁的链式调用方式来实现与数据库的交互。
 
 
 # 模型定义
 ```go
 	type User struct {
-        oorm.Model
+        orm.Model
         Name      string `db:"index:us|1"`
         Password  string
         Status    int8
@@ -20,7 +20,7 @@
 ## mysql
 ```go
     dsn := "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-	orm, err = orm.Open(mysql.Open(dsn), &oorm.Config{})
+	orm, err = orm.Open(mysql.Open(dsn), &orm.Config{})
 
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
@@ -29,7 +29,7 @@
 ```
 
 ## 连接池
-OORM 使用 database/sql 维护连接池
+ORM 使用 database/sql 维护连接池
 ```go
     sqlDB, err := orm.DBPool()
     
@@ -46,10 +46,10 @@ OORM 使用 database/sql 维护连接池
 
 
 # 约定
-`oorm` 倾向于约定优于配置 默认情况下，`oorm` 使用 ID 作为主键，使用结构体名的 `蛇形` 作为表名，字段名的 `蛇形` 作为列名，并使用 `CreatedAt`、`UpdatedAt` 字段追踪创建、更新时间
+`orm` 倾向于约定优于配置 默认情况下，`orm` 使用 ID 作为主键，使用结构体名的 `蛇形` 作为表名，字段名的 `蛇形` 作为列名，并使用 `CreatedAt`、`UpdatedAt` 字段追踪创建、更新时间
 
-### oorm.Model
-`oorm` 定义一个 `oorm.Model` 结构体，其包括字段 `ID`、`CreatedAt`、`UpdatedAt`、`DeletedAt`
+### orm.Model
+`orm` 定义一个 `orm.Model` 结构体，其包括字段 `ID`、`CreatedAt`、`UpdatedAt`、`DeletedAt`
 > 您可以将它嵌入到您的结构体中，以包含这几个字段
 ```go
     type Model struct {
@@ -108,7 +108,7 @@ AutoMigrate 用于自动迁移您的 schema，保持您的 schema 是最新的�
 ```go
 
 	type User struct {
-		oorm.Model
+		orm.Model
 		Name      string `db:"index:us|1"`
 		Password  string
 		Status    int8
@@ -146,7 +146,7 @@ type IMigrator interface {
 ## 声明
 ```go
 	type User struct {
-        oorm.Model
+        orm.Model
         Name      string `db:"index:us|1"`
         Password  string
         Status    int8
@@ -520,14 +520,14 @@ Get(&users)
 ### 声明
 ```go
 type Contact struct{
-	oorm.Model
+	orm.Model
 	UserId uint
 	Mobile string
 	Email string
 }
 
 type User struct {
-	oorm.Model
+	orm.Model
 	UserName string
 	Password string
 	Nickname string
@@ -538,7 +538,7 @@ type User struct {
 ```
 ### 检索
 ```go
-func GetUser(db *oorm.DB) (*User, error) {
+func GetUser(db *orm.DB) (*User, error) {
 	var user = &User{}
 
 // SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_name`,`password`,`nickname`,`status`,`avatar` FROM `user` WHERE `id` = "1" LIMIT 1
@@ -551,11 +551,11 @@ func GetUser(db *oorm.DB) (*User, error) {
 	return user, err
 }
 ```
-> oorm 会基于模型名决定外键名称。在这种情况下，会自动假设 `Contact` 模型有一个 `UserId` 外键。如果你想覆盖这个约定，标签 foreignKey 来更改它：
+> orm 会基于模型名决定外键名称。在这种情况下，会自动假设 `Contact` 模型有一个 `UserId` 外键。如果你想覆盖这个约定，标签 foreignKey 来更改它：
 
 ```go
 type User struct {
-    oorm.Model
+    orm.Model
     UserName string
     Password string
     Nickname string
@@ -565,7 +565,7 @@ type User struct {
 }
 
 type Contact struct {
-    oorm.Model
+    orm.Model
     Uid    uint
     Mobile string
     Email  string
@@ -573,7 +573,7 @@ type Contact struct {
 ```
 
 ```go
-func GetUser(db *oorm.DB) (*User, error) {
+func GetUser(db *orm.DB) (*User, error) {
 	var user = &User{}
 
 // SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_name`,`password`,`nickname`,`status`,`avatar` FROM `user` WHERE `id` = "1" LIMIT 1
@@ -594,7 +594,7 @@ func GetUser(db *oorm.DB) (*User, error) {
 ### 声明
 ```go
 type Contact struct {
-    oorm.Model
+    orm.Model
     UserId uint
     Mobile string
     Email  string
@@ -602,7 +602,7 @@ type Contact struct {
 }
 
 type User struct {
-    oorm.Model
+    orm.Model
     UserName string
     Password string
     Nickname string
@@ -613,7 +613,7 @@ type User struct {
 
 ### 检索
 ```go
-func GetUser(db *oorm.DB) (*Contact, error) {
+func GetUser(db *orm.DB) (*Contact, error) {
     var contact = &Contact{}
 
 // SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_id`,`mobile`,`email` FROM `contact` WHERE `id` = "2" LIMIT 1
@@ -634,14 +634,14 @@ func GetUser(db *oorm.DB) (*Contact, error) {
 ### 声明
 ```go
 type Contact struct{
-	oorm.Model
+	orm.Model
 	UserId uint
 	Mobile string
 	Email string
 }
 
 type User struct {
-	oorm.Model
+	orm.Model
 	UserName string
 	Password string
 	Nickname string
@@ -652,7 +652,7 @@ type User struct {
 ```
 ### 检索
 ```go
-func GetUser(db *oorm.DB) (*User, error) {
+func GetUser(db *orm.DB) (*User, error) {
 	var user = &User{}
 
 // SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_name`,`password`,`nickname`,`status`,`avatar` FROM `user` WHERE `id` = "1" LIMIT 1
@@ -665,11 +665,11 @@ func GetUser(db *oorm.DB) (*User, error) {
 	return user, err
 }
 ```
-> oorm 会基于模型名决定外键名称。在这种情况下，会自动假设 `Contact` 模型有一个 `UserId` 外键。如果你想覆盖这个约定，标签 foreignKey 来更改它：
+> orm 会基于模型名决定外键名称。在这种情况下，会自动假设 `Contact` 模型有一个 `UserId` 外键。如果你想覆盖这个约定，标签 foreignKey 来更改它：
 
 ```go
 type User struct {
-    oorm.Model
+    orm.Model
     UserName string
     Password string
     Nickname string
@@ -679,7 +679,7 @@ type User struct {
 }
 
 type Contact struct {
-    oorm.Model
+    orm.Model
     Uid    uint
     Mobile string
     Email  string
@@ -687,7 +687,7 @@ type Contact struct {
 ```
 
 ```go
-func GetUser(db *oorm.DB) (*User, error) {
+func GetUser(db *orm.DB) (*User, error) {
 	var user = &User{}
 
 // SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`user_name`,`password`,`nickname`,`status`,`avatar` FROM `user` WHERE `id` = "1" LIMIT 1
@@ -711,13 +711,13 @@ func GetUser(db *oorm.DB) (*User, error) {
 
 ```go
 	type Contact struct {
-		oorm.Model
+		orm.Model
 		UserId uint
 		Mobile string
 	}
 
 	type User struct {
-		oorm.Model
+		orm.Model
 		UserName string
 		Contact  []Contact
 	}
@@ -725,7 +725,7 @@ func GetUser(db *oorm.DB) (*User, error) {
 ```
 ### 新增
 ```go
-func CreatreUser(db *oorm.DB) (*User, error) {
+func CreatreUser(db *orm.DB) (*User, error) {
 	var user = &User{
 		UserName: "kwinwong",
 		Contact: []Contact{{
@@ -909,9 +909,9 @@ affected,err := orm.Where("id","<",100).Delete(&user)
 ```
 
 ## 软删除
->如果您的模型包含了一个 `oorm.DeletedAt` 字段（`oorm.Model` 已经包含了该字段)，它将自动获得软删除的能力！
+>如果您的模型包含了一个 `orm.DeletedAt` 字段（`orm.Model` 已经包含了该字段)，它将自动获得软删除的能力！
 
->拥有软删除能力的模型调用 Delete 时，记录不会从数据库中被真正删除。但 `oorm` 会将 DeletedAt 置为当前时间， 并且你不能再通过普通的查询方法找到该记录。
+>拥有软删除能力的模型调用 Delete 时，记录不会从数据库中被真正删除。但 `orm` 会将 DeletedAt 置为当前时间， 并且你不能再通过普通的查询方法找到该记录。
 
 ### 查找被软删除的记录
 > 您可以使用 `WithDelete` 找到被软删除的记录
@@ -929,7 +929,7 @@ affected,err := orm.Where("id","<",100).Delete(&user,true)
 ```
 
 # 数据库事务
-想要在数据库事务中运行一系列操作，你可以使用 `oorm` 的 `Transaction` 方法。如果在事务的闭包中出现了异常，事务将会自动回滚。如果闭包执行成功，事务将会自动提交。在使用 `Transaction` 方法时不需要手动回滚或提交：
+想要在数据库事务中运行一系列操作，你可以使用 `orm` 的 `Transaction` 方法。如果在事务的闭包中出现了异常，事务将会自动回滚。如果闭包执行成功，事务将会自动提交。在使用 `Transaction` 方法时不需要手动回滚或提交：
 
 ```go
 	orm.Transaction(func(db *DB) (err error) {
@@ -955,9 +955,9 @@ affected,err := orm.Where("id","<",100).Delete(&user,true)
 
 ## 手动执行事务
 
->如果你想要手动处理事务并完全控制回滚和提交，可以使用 `oorm` 提供的 `Begin` 方法： 
+>如果你想要手动处理事务并完全控制回滚和提交，可以使用 `orm` 提供的 `Begin` 方法： 
 
->在事务中所有的操作都要用`Begin`返回的`*oorm.DB`对象去操作，包括回滚和提交
+>在事务中所有的操作都要用`Begin`返回的`*orm.DB`对象去操作，包括回滚和提交
 
 ```go
 db, err := d.Begin()
@@ -1004,7 +1004,7 @@ func (u *User) SetAttr() {
 > 当标签中有 `json`,则系统会自动解析、装载
 ```go
 type User struct {
-	oorm.Model
+	orm.Model
 	Extend   map[string]interface{} `db:"json"`
 }	
 ```
