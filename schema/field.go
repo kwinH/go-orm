@@ -3,6 +3,7 @@ package schema
 import (
 	sqlBuilder "github.com/kwinh/go-sql-builder"
 	"go/ast"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -85,30 +86,29 @@ func parseField(p reflect.StructField, dialect IDialect, schema *Schema, isAnony
 
 		field.Type = dialect.DataTypeOf(field)
 
-		if schema.fieldMap[field.FieldName] != nil {
-			if isAnonymous == false {
-				delete(schema.fieldMap, field.FieldName)
-				delete(schema.fieldMap, p.Name)
-				for i, f := range schema.Fields {
-					if f.Name == field.Name {
-						schema.Fields[i] = field
-					}
-				}
-
-				schema.fieldMap[field.FieldName] = field
-				schema.fieldMap[p.Name] = field
-			}
+		if existingField, exists := schema.fieldMap[field.FieldName]; exists && !isAnonymous {
+			// 替换现有字段
+			replaceFieldInSchema(schema, field, existingField)
 		} else {
+			// 添加新字段
 			schema.Fields = append(schema.Fields, field)
 			schema.fieldMap[field.FieldName] = field
 			schema.fieldMap[p.Name] = field
 		}
 	}
+}
 
+func replaceFieldInSchema(schema *Schema, newField, existingField *Field) {
+	for i, f := range schema.Fields {
+		if f.Name == existingField.Name {
+			schema.Fields[i] = newField
+		}
+	}
+	schema.fieldMap[newField.FieldName] = newField
+	schema.fieldMap[newField.StructField.Name] = newField
 }
 
 func parseTag(field *Field, schema *Schema) {
-	var err error
 	if customFieldName, ok := field.TagSettings["field"]; ok {
 		field.FieldName = customFieldName
 	}
@@ -130,7 +130,7 @@ func parseTag(field *Field, schema *Schema) {
 
 	if v, ok := field.TagSettings["default"]; ok {
 		field.HavDefaultValue = true
-		if v == "NULL" {
+		if v == string(DefaultNull) {
 			field.DefaultValue = DefaultNull
 		} else {
 			field.DefaultValue = v
@@ -138,7 +138,10 @@ func parseTag(field *Field, schema *Schema) {
 	}
 
 	if num, ok := field.TagSettings["size"]; ok {
-		if field.Size, err = strconv.ParseInt(num, 10, 64); err != nil {
+		if size, err := strconv.ParseInt(num, 10, 64); err == nil {
+			field.Size = size
+		} else {
+			log.Printf("Invalid size value for field %s: %v", field.Name, num)
 			field.Size = 0
 		}
 	}
@@ -178,18 +181,24 @@ func setIndex(indexKey string, field *Field, schema *Schema, indexType IndexType
 
 	priority := 0
 	if len(indexKeyVal) >= 2 {
+		var err error
 		indexKey = indexKeyVal[0]
-		priority, _ = strconv.Atoi(indexKeyVal[1])
+		priority, err = strconv.Atoi(indexKeyVal[1])
+		if err != nil {
+			log.Printf("Invalid priority value for index on field %s: %v", field.Name, indexKeyVal[1])
+			priority = 0
+		}
 	}
 
 	var indexKeys IndexList
-	if indexType == INDEXKEY {
+	switch indexType {
+	case INDEXKEY:
 		indexKey += "_key"
 		indexKeys = schema.IndexKeys
-	} else if indexType == UNIQUEKEY {
-		indexKeys = schema.UniqueKeys
+	case UNIQUEKEY:
 		indexKey += "_uni"
-	} else if indexType == FULLTEXTKEY {
+		indexKeys = schema.UniqueKeys
+	case FULLTEXTKEY:
 		indexKey += "_full"
 		indexKeys = schema.FullKeys
 	}
@@ -200,12 +209,10 @@ func setIndex(indexKey string, field *Field, schema *Schema, indexType IndexType
 			Field:    field,
 		})
 	} else {
-		indexList := make([]Index, 1)
-		indexList[0] = Index{
+		indexList := []Index{{
 			Priority: priority,
 			Field:    field,
-		}
-
+		}}
 		indexKeys[indexKey] = indexList
 	}
 }
@@ -214,42 +221,34 @@ func setDataType(field *Field) {
 	switch field.StructField.Type.Kind() {
 	case reflect.Bool:
 		field.DataType = Bool
-		return
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		field.DataType = Int
-		return
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		field.DataType = Uint
-		return
 	case reflect.Float32, reflect.Float64:
 		field.DataType = Float
-		return
 	case reflect.String:
 		field.DataType = String
-		return
 	case reflect.Struct:
 		switch field.StructField.Type.String() {
 		case "sql.NullBool":
 			field.DataType = Bool
-			return
 		case "sql.NullInt16", "sql.NullInt32", "sql.NullInt64":
 			field.DataType = Int
-			return
 		case "sql.NullFloat64":
 			field.DataType = Float
-			return
 		case "sql.NullString":
 			field.DataType = String
-			return
 		case "sql.NullTime", "time.Time":
 			field.DataType = Time
-			return
+		default:
+			field.DataType = Json
 		}
-		field.DataType = Json
-		return
 	case reflect.Array, reflect.Slice, reflect.Map:
 		field.DataType = Json
-		return
+	default:
+		log.Printf("Unsupported data type for field %s: %s", field.Name, field.StructField.Type.Kind())
+		field.DataType = String
 	}
 }
 
@@ -258,27 +257,22 @@ func setSize(field *Field) {
 		switch field.StructField.Type.Kind() {
 		case reflect.Int64, reflect.Uint, reflect.Uint64, reflect.Float64:
 			field.Size = 64
-			return
 		case reflect.Int8, reflect.Uint8:
 			field.Size = 8
-			return
 		case reflect.Int16, reflect.Uint16:
 			field.Size = 16
-			return
 		case reflect.Int, reflect.Int32, reflect.Uint32, reflect.Float32:
 			field.Size = 32
-			return
 		case reflect.Struct:
 			switch field.StructField.Type.String() {
 			case "sql.NullInt16":
 				field.Size = 16
-				return
 			case "sql.NullInt32":
 				field.Size = 32
-				return
 			case "sql.NullInt64", "sql.NullFloat64":
 				field.Size = 64
-				return
+			default:
+				log.Printf("No default size for struct type %s, field %s", field.StructField.Type.String(), field.Name)
 			}
 		}
 	}
