@@ -3,51 +3,49 @@ package schema
 import "strings"
 
 func SnakeString(s string) string {
-	data := make([]byte, 0, len(s)*2)
-	j := false
-	num := len(s)
-	for i := 0; i < num; i++ {
-		d := s[i]
-		// or通过ASCII码进行大小写的转化
-		// 65-90（A-Z），97-122（a-z）
-		//判断如果字母为大写的A-Z就在前面拼接一个_
-		if i > 0 && d >= 'A' && d <= 'Z' && j {
-			data = append(data, '_')
+	var builder strings.Builder
+	builder.Grow(len(s) * 2)
+
+	for i, d := range s {
+		if i > 0 && d >= 'A' && d <= 'Z' {
+			builder.WriteByte('_')
 		}
-		if d != '_' {
-			j = true
-		}
-		data = append(data, d)
+		builder.WriteRune(d)
 	}
-	//ToLower把大写字母统一转小写
-	return strings.ToLower(string(data[:]))
+
+	return strings.ToLower(builder.String())
 }
 
 func ParseTagSetting(str string, sep string) map[string]string {
-	settings := map[string]string{}
+	settings := make(map[string]string)
 	names := strings.Split(str, sep)
+	var buffer strings.Builder
 
-	for i := 0; i < len(names); i++ {
-		j := i
-		if len(names[j]) > 0 {
-			for {
-				if names[j][len(names[j])-1] == '\\' {
-					i++
-					names[j] = names[j][0:len(names[j])-1] + sep + names[i]
-					names[i] = ""
-				} else {
-					break
-				}
+	for _, name := range names {
+		// 处理以 '\' 结尾的转义符
+		if len(name) > 0 && name[len(name)-1] == '\\' {
+			if buffer.Len() > 0 {
+				buffer.WriteString(sep)
 			}
+			buffer.WriteString(name[:len(name)-1])
+			continue
 		}
 
-		values := strings.Split(names[j], ":")
-		k := strings.TrimSpace(values[0])
+		// 将缓冲区中的内容与当前name组合
+		if buffer.Len() > 0 {
+			buffer.WriteString(sep)
+			buffer.WriteString(name)
+			name = buffer.String()
+			buffer.Reset()
+		}
 
-		if len(values) >= 2 {
-			settings[k] = strings.Join(values[1:], ":")
-		} else if k != "" {
-			settings[k] = ""
+		values := strings.SplitN(name, ":", 2)
+		key := strings.TrimSpace(values[0])
+
+		if len(values) == 2 {
+			settings[key] = values[1]
+		} else if key != "" {
+			settings[key] = ""
 		}
 	}
 

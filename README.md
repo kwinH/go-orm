@@ -7,12 +7,12 @@
 ```go
 	type User struct {
         orm.Model
-        Name      string `db:"index:us|1"`
+        Name      string `orm:"index:us|1"`
         Password  string
         Status    int8
         Age       int8
         Sex       int8
-        Balance   float64 `db:"decimal:10,2"`
+        Balance   float64 `orm:"decimal:10,2"`
 }
 ```
 
@@ -53,10 +53,10 @@ ORM 使用 database/sql 维护连接池
 > 您可以将它嵌入到您的结构体中，以包含这几个字段
 ```go
     type Model struct {
-        Id        uint `db:"autoIncrement"`
+        Id        uint `orm:"autoIncrement"`
         CreatedAt time.Time
         UpdatedAt time.Time
-        DeletedAt sql.NullTime `db:"index"`
+        DeletedAt sql.NullTime `orm:"index"`
     }
 ```
 
@@ -79,7 +79,7 @@ type User struct {
 ```
 
 ### 字段标签
-> 多个标签用`;`分割，例如：`db:"decimal:10,2;index:us|1"`
+> 多个标签用`;`分割，例如：`orm:"decimal:10,2;index:us|1"`
 
 | 标签名           | 说明                            |
 |---------------|-------------------------------|
@@ -88,9 +88,9 @@ type User struct {
 | default       | 定义列的默认值  (可以定义为NULL)          |
 | primaryKey    | 将列定义为主键                       |
 | autoIncrement | 指定列为自动增长(同是也会指定为主键)           |
-| decimal       | 精度 例 `db:"decimal:10,2"`      |
+| decimal       | 精度 例 `orm:"decimal:10,2"`     |
 | comment       | 	迁移时为字段添加注释                   |
-| raw           | 原生表达式  例 `db:"raw:count(*)"`  |
+| raw           | 原生表达式  例 `orm:"raw:count(*)"` |
 | json          | 用于自动解析装载json                  |
 | index         | 根据参数创建普通索引，多个字段使用相同的名称则创建复合索引 |
 | unique        | 根据参数创建唯一索引，多个字段使用相同的名称则创建复合索引 |
@@ -109,12 +109,12 @@ AutoMigrate 用于自动迁移您的 schema，保持您的 schema 是最新的�
 
 	type User struct {
 		orm.Model
-		Name      string `db:"index:us|1"`
+		Name      string `orm:"index:us|1"`
 		Password  string
 		Status    int8
 		Age       int8
 		Sex       int8
-		Balance   float64 `db:"decimal:10,2"`
+		Balance   float64 `orm:"decimal:10,2"`
 	}
 
 
@@ -147,12 +147,12 @@ type IMigrator interface {
 ```go
 	type User struct {
         orm.Model
-        Name      string `db:"index:us|1"`
+        Name      string `orm:"index:us|1"`
         Password  string
         Status    int8
         Age       int8
         Sex       int8
-        Balance   float64 `db:"decimal:10,2"`
+        Balance   float64 `orm:"decimal:10,2"`
 }
 
     var users []User
@@ -210,7 +210,7 @@ res,err := orm.Table("user").Group("status").Select("id").Count()
 
     type User struct {
     Status int8
-    C      int `db:"raw:count(*)"`
+    C      int `orm:"raw:count(*)"`
     }
     
     var users []User
@@ -561,7 +561,7 @@ type User struct {
     Nickname string
     Status   string
     Avatar   string
-    Contact  Contact `db:"foreignKey:Uid"`
+    Contact  Contact `orm:"foreignKey:Uid"`
 }
 
 type Contact struct {
@@ -598,7 +598,7 @@ type Contact struct {
     UserId uint
     Mobile string
     Email  string
-    User   User `db:"localKey:UserId;foreignKey:Id"`
+    User   User `orm:"localKey:UserId;foreignKey:Id"`
 }
 
 type User struct {
@@ -675,7 +675,7 @@ type User struct {
     Nickname string
     Status   string
     Avatar   string
-    Contact  []Contact `db:"foreignKey:Uid"`
+    Contact  []Contact `orm:"foreignKey:Uid"`
 }
 
 type Contact struct {
@@ -1005,7 +1005,7 @@ func (u *User) SetAttr() {
 ```go
 type User struct {
 	orm.Model
-	Extend   map[string]interface{} `db:"json"`
+	Extend   map[string]interface{} `orm:"json"`
 }	
 ```
 ## 查询模型

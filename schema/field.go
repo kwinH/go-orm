@@ -52,7 +52,7 @@ func parseField(p reflect.StructField, dialect IDialect, schema *Schema, isAnony
 
 		var tag string
 		var tagSettings map[string]string
-		if v, ok := p.Tag.Lookup("db"); ok {
+		if v, ok := p.Tag.Lookup("orm"); ok {
 			tag = v
 			tagSettings = ParseTagSetting(v, ";")
 		}

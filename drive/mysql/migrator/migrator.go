@@ -41,24 +41,11 @@ func (m Migrator) TableInfo(tableName string) schema.TableInfo {
 	indexKeys := make(map[string][]string)
 	fullKeys := make(map[string][]string)
 
-	collate := ""
 	for _, fieldInfo := range strings.Split(sql[strings.Index(sql, "\n")+1:], "\n") {
 		if strings.Index(fieldInfo, " `") == 1 {
 			fieldNameIndex := strings.Index(fieldInfo, "` ")
 			fieldName := fieldInfo[3:fieldNameIndex]
-			if collate == "" {
-				collateIndex := strings.Index(fieldInfo, "COLLATE ")
-				if collateIndex != -1 {
-					collate = fieldInfo[collateIndex+8:]
-					collate = " COLLATE " + collate[:strings.Index(collate, " ")]
-				}
-			}
-
-			fieldsInfo[fieldName] = fieldInfo[2 : len(fieldInfo)-1]
-
-			if collate != "" {
-				fieldsInfo[fieldName] = strings.ReplaceAll(fieldsInfo[fieldName], collate, "")
-			}
+			fieldsInfo[fieldName] = fieldInfo[fieldNameIndex+2:]
 		} else {
 			var indexType schema.IndexType
 			indexKey := ""
