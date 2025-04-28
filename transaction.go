@@ -2,6 +2,7 @@ package orm
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -9,15 +10,22 @@ type ITransaction interface {
 	Begin() (*sql.Tx, error)
 }
 
-func (d *DB) Begin() (*DB, error) {
+func (d *DB) Begin() (db *DB, err error) {
 	start := time.Now()
-	var err error
-	db := d.ClonePure(0)
+	db = d.ClonePure(0)
+
+	defer func() {
+		if r := recover(); r != nil {
+			db.Logger.Error("Transaction panic: %v", r)
+			err = fmt.Errorf("transaction panic: %v", r)
+		}
+	}()
 
 	db.tx, err = db.connPool.(ITransaction).Begin()
 
 	if err != nil {
 		db.Logger.Error("Transaction Begin %v", err)
+		return nil, err
 	}
 
 	db.Logger.Trace("Transaction Begin", []any{}, start)

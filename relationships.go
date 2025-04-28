@@ -96,29 +96,31 @@ func (d *DB) relationships(withs []*With) {
 func (d *DB) setWithRelationships(with *With, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	if with.Values == nil {
+	if with.Values == nil || len(with.Values) == 0 {
 		return
 	}
 
 	joinResults := schema.MakeSlice(with.ModelType).Elem()
-
 	db := d.ClonePure(1)
 
-	for modelName, funcList := range d.childWiths {
-		db.With(modelName, funcList...)
+	if len(d.childWiths) > 0 {
+		for modelName, funcList := range d.childWiths {
+			db.With(modelName, funcList...)
+		}
 	}
 
 	with.Callback(db)
-	err := db.Where(with.ForeignKey.FieldName, "in", with.Values).Get(joinResults.Addr().Interface())
 
+	err := db.Where(with.ForeignKey.FieldName, "in", with.Values).Get(joinResults.Addr().Interface())
 	if err != nil {
 		d.AddError(err)
 		return
 	}
 
+	fieldName := with.ForeignKey.Name
 	for i := 0; i < joinResults.Len(); i++ {
 		val := joinResults.Index(i)
-		key := val.FieldByName(with.ForeignKey.Name).Interface()
+		key := val.FieldByName(fieldName).Interface()
 		with.Relationships[key] = append(with.Relationships[key], val)
 	}
 }
@@ -142,14 +144,19 @@ func (d *DB) setDestRelationships(dests []reflect.Value, withs []*With, value re
 
 func (d *DB) setDestRelationship(with *With, dest reflect.Value, wg *sync.WaitGroup) {
 	defer wg.Done()
-	relationshipValues := with.Relationships[dest.FieldByName(with.LocalKey.Name).Interface()]
-	if relationshipValues != nil {
-		switch with.Type {
-		case schema.One:
-			dest.FieldByName(with.Name).Set(relationshipValues[0])
-		case schema.Many:
-			joinResults := schema.MakeSlice(with.ModelType).Elem()
-			dest.FieldByName(with.Name).Set(reflect.Append(joinResults, relationshipValues...))
-		}
+
+	localKeyValue := dest.FieldByName(with.LocalKey.Name).Interface()
+	relationshipValues := with.Relationships[localKeyValue]
+
+	if relationshipValues == nil {
+		return
+	}
+
+	switch with.Type {
+	case schema.One:
+		dest.FieldByName(with.Name).Set(relationshipValues[0])
+	case schema.Many:
+		joinResults := schema.MakeSlice(with.ModelType).Elem()
+		dest.FieldByName(with.Name).Set(reflect.Append(joinResults, relationshipValues...))
 	}
 }

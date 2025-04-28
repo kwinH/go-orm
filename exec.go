@@ -2,10 +2,11 @@ package orm
 
 import (
 	"database/sql"
-	"github.com/kwinh/go-orm/schema"
 	"reflect"
 	"sync"
 	"time"
+
+	"github.com/kwinh/go-orm/schema"
 )
 
 func (d *DB) OmitEmpty() *DB {
@@ -113,6 +114,7 @@ func (d *DB) Replace(args ...any) (result int64, err error) {
 }
 
 func (d *DB) withCreateGroup(withs []*With, args ...any) (rowsAffected int64, err error) {
+	var mu sync.Mutex
 	wg := &sync.WaitGroup{}
 	field := d.getField()
 
@@ -130,12 +132,10 @@ func (d *DB) withCreateGroup(withs []*With, args ...any) (rowsAffected int64, er
 		return
 	}
 
-	for {
-		if affected, ok := <-rowsAffects; ok {
-			rowsAffected += affected
-		} else {
-			break
-		}
+	for affected := range rowsAffects {
+		mu.Lock()
+		rowsAffected += affected
+		mu.Unlock()
 	}
 
 	return
@@ -264,6 +264,10 @@ func (d *DB) softDelete() (int64, error) {
 }
 
 func (d *DB) Update(arg any) (affected int64, err error) {
+	if arg == nil {
+		return 0, ErrParam
+	}
+
 	defer d.resetClone()
 	db := d.getInstance()
 

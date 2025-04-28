@@ -3,8 +3,10 @@ package orm
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/kwinh/go-orm/schema"
+	"fmt"
 	"reflect"
+
+	"github.com/kwinh/go-orm/schema"
 )
 
 func (d *DB) Alias(tableAlias string) *DB {
@@ -86,7 +88,7 @@ func (d *DB) rowsBuildMap(rows *sql.Rows, tableInfo *schema.Schema) error {
 	return nil
 }
 
-func (d *DB) Get(value any) error {
+func (d *DB) Get(value any) (err error) {
 	defer d.resetClone()
 
 	db := d.getInstance()
@@ -121,7 +123,15 @@ func (d *DB) Get(value any) error {
 		return err
 	}
 
-	defer rows.Close()
+	defer func() {
+		if err2 := rows.Close(); err2 != nil {
+			if err != nil {
+				err = fmt.Errorf("%w；%v", err, err2)
+			} else {
+				err = err2
+			}
+		}
+	}()
 
 	if tableInfo.Type.Kind() == reflect.Map {
 		return db.rowsBuildMap(rows, tableInfo)
@@ -130,9 +140,37 @@ func (d *DB) Get(value any) error {
 	withs := db.makeWiths(tableInfo)
 
 	var dests []reflect.Value
+
+	dest := reflect.New(tableInfo.Type).Elem()
+
+	var getAttrFunc func()
+	var afterQueryFunc func(*DB) error
+	if model, ok := dest.Addr().Interface().(IGetAttr); ok {
+		getAttrFunc = model.GetAttr
+	}
+
+	if model, ok := dest.Addr().Interface().(IAfterQuery); ok {
+		afterQueryFunc = model.AfterQuery
+	}
+
+	var values = make([]any, len(tableInfo.Fields))
+	var jsonFields = map[int]string{}
+
+	for i, field := range tableInfo.Fields {
+		if field.IsJson {
+			var str []byte
+			jsonFields[i] = field.Name
+			values[i] = &str
+		} else {
+			values[i] = dest.FieldByName(field.Name).Addr().Interface()
+		}
+	}
+
+	found := false
 	for rows.Next() {
-		dest, err1 := db.rowHandle(tableInfo, rows)
-		if err1 == nil {
+		found = true
+		err = db.rowHandle(rows, dest, values, jsonFields, getAttrFunc, afterQueryFunc)
+		if err == nil {
 			dests = append(dests, dest)
 			db.getWiths(withs, dest)
 		} else {
@@ -140,7 +178,14 @@ func (d *DB) Get(value any) error {
 		}
 	}
 
+	if !found {
+		return ErrNotFind
+	}
+
 	if len(dests) == 0 {
+		if db.Error != nil {
+			return db.Error
+		}
 		return ErrNotFind
 	}
 
@@ -176,42 +221,31 @@ func (d *DB) First(value any) error {
 	return nil
 }
 
-func (d *DB) rowHandle(tableInfo *schema.Schema, rows *sql.Rows) (dest reflect.Value, err error) {
-	dest = reflect.New(tableInfo.Type).Elem()
-	var values = make([]any, len(tableInfo.Fields))
-	var jsons = make(map[string]*[]byte)
+func (d *DB) rowHandle(rows *sql.Rows, dest reflect.Value, values []any, jsonFields map[int]string, getAttrFunc func(), afterQueryFunc func(*DB) error) (err error) {
 
-	for i, field := range tableInfo.Fields {
-
-		if field.IsJson {
-			var str []byte
-			jsons[field.Name] = &str
-			values[i] = jsons[field.Name]
-		} else {
-			values[i] = dest.FieldByName(field.Name).Addr().Interface()
-		}
-
-	}
 	if err = rows.Scan(values...); err != nil {
 		return
 	}
 
-	for fieldName, data := range jsons {
-		err = json.Unmarshal(*data, dest.FieldByName(fieldName).Addr().Interface())
-		if err != nil {
+	for i, fieldName := range jsonFields {
+		data := values[i].(*[]byte)
+		if len(*data) > 0 {
+			if err = json.Unmarshal(*data, dest.FieldByName(fieldName).Addr().Interface()); err != nil {
+				return
+			}
+		}
+	}
+
+	if getAttrFunc != nil {
+		getAttrFunc()
+	}
+
+	if afterQueryFunc != nil {
+		if err = afterQueryFunc(d); err != nil {
 			return
 		}
 	}
 
-	if model, ok := dest.Addr().Interface().(IGetAttr); ok {
-		model.GetAttr()
-	}
-
-	if model, ok := dest.Addr().Interface().(IAfterQuery); ok {
-		if err = model.AfterQuery(d); err != nil {
-			return
-		}
-	}
 	return
 }
 

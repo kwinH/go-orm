@@ -3,11 +3,13 @@ package orm
 import (
 	"database/sql"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/kwinh/go-orm/drive"
 	"github.com/kwinh/go-orm/logger"
 	"github.com/kwinh/go-orm/schema"
 	"github.com/kwinh/go-sql-builder"
-	"time"
 )
 
 type Orm struct {
@@ -32,6 +34,7 @@ type DB struct {
 	withs      map[string]WithFunc
 	childWiths map[string][]WithFunc
 	clone      int
+	muError    sync.Mutex
 	Error      error
 	sql        string
 	bindings   []any
@@ -70,13 +73,14 @@ func Open(dialector schema.IDialect, c ...*Config) (db *DB, err error) {
 }
 
 // AddError add error to db
-func (d *DB) AddError(err error) error {
+func (d *DB) AddError(err error) {
+	d.muError.Lock()
+	defer d.muError.Unlock()
 	if d.Error == nil {
 		d.Error = err
 	} else if err != nil {
-		d.Error = fmt.Errorf("%v; %w", d.Error, err)
+		d.Error = fmt.Errorf("%w; %w", d.Error, err)
 	}
-	return d.Error
 }
 
 func (d *DB) Exec(query string, args ...any) (res sql.Result, err error) {

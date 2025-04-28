@@ -2,6 +2,7 @@ package orm
 
 import (
 	"fmt"
+
 	sqlBuilder "github.com/kwinh/go-sql-builder"
 )
 
@@ -24,8 +25,13 @@ func (d *DB) aggregate(sql string) (data int64, err error) {
 	}
 
 	defer rows.Close()
-	rows.Next()
-	rows.Scan(&data)
+
+	if !rows.Next() {
+		return 0, ErrNotFind
+	}
+	if err = rows.Scan(&data); err != nil {
+		return 0, err
+	}
 
 	return
 }
